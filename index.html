@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UN Reform Proposals Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface-page:#F4F6F8;--surface-card:#FFFFFF;--blue-50:#EBF4FB;--blue-200:#A8D1ED;
+  --blue-400:#3D98D4;--blue-500:#1A7BB8;--blue-600:#155F91;--blue-700:#0F4670;--blue-800:#0A2F4E;
+  --text-1:#2C3540;--text-2:#546070;--text-3:#8A97A6;--border:#A8D1ED;--border-subtle:#E8ECF0;
+  --font-body:'Source Sans 3','Inter',system-ui,sans-serif;
+  --font-display:'Merriweather','Georgia',serif;--font-mono:'JetBrains Mono','Courier New',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{font-family:var(--font-body);background:var(--surface-page);color:var(--text-1);-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer;}
+::selection{background:var(--blue-200);}
+.mono{font-family:var(--font-mono);}
+*:focus-visible{outline:2px solid var(--blue-400);outline-offset:2px;border-radius:4px;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:0.001ms!important;transition-duration:0.001ms!important;}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useMemo,useRef,useEffect}=React;
+
+/* ===== CONFIG ===== */
+const THEMES=[
+  {id:"peace",  short:"Peace",       full:"Peace & Security",       color:"#FF6B6B"},
+  {id:"human",  short:"Humanitarian",full:"Humanitarian",           color:"#F5A33A"},
+  {id:"rights", short:"Rights",      full:"Human Rights",           color:"#F5D742"},
+  {id:"devt",   short:"Development", full:"Sustainable Development", color:"#8BD450"},
+  {id:"coord",  short:"Coordination",full:"Coordination",           color:"#2FC9C0"},
+  {id:"enable", short:"Enablers",    full:"System Enablers",         color:"#4FA8FF"},
+  {id:"mandate",short:"Mandates",    full:"Mandates & Efficiency",   color:"#B388FF"},
+];
+const WORKSTREAMS=[
+  {id:"WS1",short:"WS1",full:"WS1 · Secretariat efficiency"},
+  {id:"WS2",short:"WS2",full:"WS2 · Mandate lifecycle"},
+  {id:"WS3",short:"WS3",full:"WS3 · Structural change"},
+  {id:"EXT",short:"External",full:"Beyond UN80"},
+];
+const SOURCES={
+  un80:{label:"UN80 official action", ring:"none"},
+  ms:  {label:"Member State proposal",ring:"solid"},
+  cso: {label:"Civil society",        ring:"double"},
+  tt:  {label:"Think tank / academic",ring:"dashed"},
+};
+const RING_HEX="#8C99A8";              // neutral source-ring stroke (reads on dark field and light card)
+const SWATCH_FILL="#AEBAC8";           // neutral fill for source legend swatches
+const fillOf=b=>b.src==="un80"?"#4FB4E8":(STANCE[b.stance]||STANCE.New).color; // fill = stance
+const LEVELS=[
+  {v:1,label:"Incremental",   desc:"Process, review & coordination tweaks"},
+  {v:2,label:"Consolidation", desc:"Co-location & merged functions"},
+  {v:3,label:"Transformation",desc:"New structures, mergers, new models"},
+  {v:4,label:"Dissolution",   desc:"Sunset, abolish or terminate"},
+];
+const STANCE={
+  official:   {label:"Official UN80 action", color:"#4FB4E8"},
+  New:        {label:"New idea",             color:"#9FB6C4"},
+  Enabling:   {label:"Enabling / precondition",color:"#2FC9C0"},
+  Endorse:    {label:"Endorses a UN80 action",color:"#8BD450"},
+  Conditional:{label:"Conditional",          color:"#F5B45A"},
+  Alternative:{label:"Alternative",          color:"#B388FF"},
+  Oppose:     {label:"Opposes a UN80 action", color:"#FF6B6B"},
+};
+const STANCE_ORDER=["official","New","Enabling","Endorse","Conditional","Alternative","Oppose"];
+const themeById=id=>THEMES.find(t=>t.id===id);
+const wsFull=id=>{const w=WORKSTREAMS.find(x=>x.id===id);return w?w.full:id;};
+
+/* ===== DATA ===== */
+const WP={
+  1:["Peace operations","USG DPPA; USG DPO","peace"],2:["New Humanitarian Compact","USG OCHA","human"],
+  3:["UNDP / UNOPS","DSG; Administrator UNDP; ED UNOPS","devt"],4:["UNFPA / UN Women","DSG; ED UNFPA; ED UN Women","devt"],
+  5:["UNCT reconfiguration","DSG","devt"],6:["Regional reset","DSG","devt"],
+  7:["Joint knowledge hubs","USG DESA; SG UNCTAD","devt"],8:["Expertise-on-demand","SG ITU","devt"],
+  9:["Human rights group","HC OHCHR","rights"],10:["Senior management coordination forums","USG Policy","coord"],
+  11:["Special envoy review","USG Policy","coord"],12:["Regional integrated platforms","DSG; ASG DCO","coord"],
+  13:["Shared platform initiative","DSG; USG OCHA","coord"],14:["Unified services roadmap","Chair HLCM; Co-Chairs BIG; ED WFP","enable"],
+  15:["Technology","USG Policy; SG ITU; Chair DTN","enable"],16:["Data","USG Policy; ED UNICEF; USG DESA","enable"],
+  17:["Training & research","ED UNITAR; Rector UNU","enable"],18:["Funding mechanisms","SA Reform; ASG DCO","enable"],
+  19:["Mandate creation support","USG Policy; USG DGACM","mandate"],20:["UN budget / programme management","CDC","mandate"],
+  21:["System-wide results management","SA Reform","mandate"],22:["Prevention, peacebuilding, peace support","USG DPPA; USG DPO","peace"],
+  23:["Disarmament","USG ODA","peace"],24:["Drugs, crime, counter-terrorism","USG UNODC; USG OCT","peace"],
+  25:["UNAIDS","DSG; ED UNAIDS","devt"],26:["Other merger review","SG","devt"],
+  27:["Environment","USG UNEP; ES UNFCCC","devt"],28:["Other development realignments","USG DESA; ES ECA; SG UNCTAD","devt"],
+  29:["Mandate registries & tools","USG Policy","mandate"],30:["SG reports","CDC","mandate"],
+  31:["Secretariat efficiencies","USG DMSPC; USG DOS","mandate"],
+};
+const RAW=[
+ [14,1,"WS3",2,"Delegate programmatic tasks & resources to best-equipped entities"],[15,1,"WS3",1,"Present a peace-operations reset proposal after the review"],
+ [1,22,"WS3",3,"Establish a unified Peacebuilding & Peace Support Office (one ASG abolished)"],[2,22,"WS3",3,"Single centre of excellence on Women, Peace & Security"],
+ [3,22,"WS3",2,"Link cross-cutting functions (data, digital, AI)"],[6,22,"WS3",3,"Consolidate two regional ASG posts into one"],
+ [7,22,"WS3",3,"Combine the Western & Northern Africa divisions"],[8,22,"WS3",3,"Integrate the Hudaydah mission into the Office of the Special Envoy for Yemen"],
+ [9,22,"WS3",2,"Streamline UNOCA and the Great Lakes Special Envoy"],[10,22,"WS3",2,"Streamline the Cyprus Special Adviser with UNFICYP"],
+ [11,22,"WS3",2,"Rationalize the Office to the Geneva International Discussions"],[49,22,"WS3",2,"Host regional peace & development advisers in Regional Commissions"],
+ [52,22,"WS3",2,"Co-locate regionally-focused special political missions"],[55,22,"WS3",2,"Align cross-pillar surge capacity at regional level"],
+ [58,22,"WS3",2,"Integrate peace & development advisory support in RC Offices"],[5,23,"WS3",3,"Integrate UNIDIR into the Office for Disarmament Affairs"],
+ [53,23,"WS3",2,"Co-locate regional disarmament centres"],[4,24,"WS3",3,"Integrate UNICRI into UNODC"],
+ [12,24,"WS3",2,"Reinforce counter-terrorism cooperation and reporting lines"],[13,24,"WS3",2,"UNODC Terrorism Prevention Branch director also reports to USG OCT"],
+ [16,2,"WS3",1,"Streamline Humanitarian Needs & Response Plans"],[17,2,"WS3",3,"Integrate global supply chains and unbranded in-country services"],
+ [18,2,"WS3",3,"Scale common services via a Global Services Hub"],[20,2,"WS3",3,"Launch a Humanitarian Data Collaborative"],
+ [21,2,"WS3",3,"Launch a Collaborative Humanitarian Diplomacy Initiative"],[22,2,"WS3",2,"Align FAO/WFP/IFAD on food security"],
+ [23,2,"WS3",2,"Align UNHCR/IOM on joint institutional approaches"],[24,2,"WS3",2,"Align UNICEF/WFP/UNHCR/IOM on beneficiary data"],
+ [25,2,"WS3",2,"Align WHO/UNICEF/WFP on health & nutrition"],[42,9,"WS3",2,"Establish a system-wide Human Rights Group led by HC OHCHR"],
+ [26,3,"WS3",3,"Assess a UNDP–UNOPS merger (to Executive Boards, Feb 2026)"],[27,4,"WS3",3,"Assess a UNFPA–UN Women merger"],
+ [28,4,"WS3",2,"Optimise UNFPA normative functions on population statistics"],[39,5,"WS3",3,"Propose a model to reconfigure country teams"],
+ [40,5,"WS3",2,"Strengthen & recalibrate the Resident Coordinator system"],[36,6,"WS3",1,"Working group on a regional capacity reset"],
+ [37,6,"WS3",2,"Host regional capacities within Regional Economic Commissions"],[33,7,"WS3",2,"Establish co-led Joint Knowledge Hubs"],
+ [34,8,"WS3",2,"Create a system-wide expertise-on-demand mechanism"],[54,8,"WS3",2,"Consolidate expertise across pillars at regional level"],
+ [29,25,"WS3",4,"Sunset UNAIDS, mainstreaming its capacity into the system"],[32,26,"WS3",1,"Analyse other potential mergers Member States may explore"],
+ [35,27,"WS3",1,"Assess environmental arrangements and propose realignments"],[30,28,"WS3",3,"Realign macroeconomic analysis (DESA/UNCTAD/Regional Commissions)"],
+ [31,28,"WS3",3,"Realign LDC/LLDC/SIDS support (DESA/UNCTAD/OHRLLS)"],[38,28,"WS3",4,"Abolish the Special Coordinator for the Sahel post"],
+ [43,10,"WS3",1,"Review top management fora (CEB, IASC, UNSDG, EC)"],[44,10,"WS3",2,"Unify administrative backend support"],
+ [46,10,"WS3",2,"Centre HQ crisis-prevention coordination on the Regional Monthly Review"],[47,10,"WS3",1,"Review interagency task forces & working groups"],
+ [45,11,"WS3",1,"Review ~30 special envoys, representatives & advisers"],[48,12,"WS3",3,"Establish lean Regional Integrated Platforms"],
+ [50,12,"WS3",2,"Harmonise how entities organise their regional work"],[19,13,"WS3",2,"Initiate a Shared Platform Initiative (DSG–ERC)"],
+ [57,13,"WS3",1,"Simplify development, humanitarian & peacebuilding planning frameworks"],[63,14,"WS3",3,"Prepare a Unified Services Roadmap"],
+ [64,14,"WS3",3,"Integrate supply chains (from the Humanitarian Compact)"],[65,14,"WS3",2,"Assess integration of ICT, payroll, HR, finance & ERP"],
+ [66,14,"WS3",3,"Accelerate a unified service backbone at country level"],[67,14,"WS3",2,"Harmonise indirect & programme support costs"],
+ [61,15,"WS3",3,"Consolidate cloud, network & office software under common providers"],[62,15,"WS3",2,"Propose a Technology Accelerator Platform to the CEB"],
+ [73,16,"WS3",3,"Propose phased Data Commons implementation"],[74,16,"WS3",2,"Scale pooled funding for data"],
+ [75,16,"WS3",2,"Pool data analysts, engineers & scientists system-wide"],[68,17,"WS3",3,"Merge the UN Staff College into UNITAR"],
+ [69,17,"WS3",3,"Integrate UNRISD into the UN University"],[72,17,"WS3",2,"Establish a joint UNU–UNITAR coordination mechanism"],
+ [76,18,"WS3",1,"Launch a pooled-funding review"],[77,18,"WS3",2,"Rationalise the portfolio of pooled funds"],
+ [78,18,"WS3",1,"Make core funding cheaper and more attractive"],[91,18,"WS2",1,"Map Funding Compact review mechanisms"],
+ [80,19,"WS2",1,"Improve staff support during mandate creation"],[81,19,"WS2",1,"Strengthen coordination & visibility across mandating bodies"],
+ [83,19,"WS2",1,"Complement programme-budget-implication estimates with system-wide info"],[88,20,"WS2",1,"Strengthen oversight of the system-wide division of labour"],
+ [89,20,"WS2",1,"Ensure entities only cite mandates with comparative advantage"],[92,20,"WS2",1,"Use mechanisms to consolidate and terminate outputs"],
+ [93,21,"WS2",1,"Harmonise system-wide results management"],[79,29,"WS2",1,"Refine mandates.un.org as a sustainable registry"],
+ [82,29,"WS2",1,"Develop AI tools for mandate research & drafting"],[84,30,"WS2",1,"Assess word-limit compliance for reports"],
+ [85,30,"WS2",1,"Assess overlapping reports for consolidation"],[86,30,"WS2",1,"Develop new reporting-format options"],
+ [87,30,"WS2",1,"Publish per-report download statistics"],[94,31,"WS1",2,"Implement Phase I efficiency actions"],
+ [95,31,"WS1",2,"Implement Phase II efficiency actions"],
+];
+const UN80=RAW.map(r=>({id:"a"+r[0],n:r[0],wp:r[1],ws:r[2],lvl:r[3],name:r[4],theme:WP[r[1]][2],wpName:WP[r[1]][0],leads:WP[r[1]][1],src:"un80",stance:"official"}));
+const IPI="IPI Global Observatory — Lynn Hastings", CICP="CIC, NYU — Camelli & Patz", CICC="CIC, NYU — Thibault Camelli",
+      RW="ReformWorks — Katja Hemmerich", SIPA="Columbia SIPA (IOUNS) — Ashutosh Upadhyay", GGI="Global Governance Institute — Ronny Patz",
+      IPPF="IPPF", FOS="Fòs Feminista", EC="Eugene Chen — Blue Helmets, Red Tape";
+const SOURCE_URLS={
+  [IPI]:"https://theglobalobservatory.org/2026/06/advancing-un-reform-what-member-states-can-do-now/",
+  [CICP]:"https://cic.nyu.edu/resources/how-to-end-the-united-nations-current-financial-crisis-and-prevent-future-ones/",
+  [GGI]:"https://www.globalgovernance.eu/publications/the-un80-initiative-as-a-productive-failure-between-geopolitical-disruptions-and-organizational-path-dependency",
+  [IPPF]:"https://www.ippf.org/media-center/ippf-response-un-secretary-generals-report-un80-initiative",
+  [FOS]:"https://fosfeminista.org/news-and-stories/getting-un80-right-protecting-mandates-while-improving-coordination/",
+  [CICC]:"https://cic.nyu.edu/resources/death-by-a-thousand-cuts-austerity-is-no-substitute-for-reform/",
+  [RW]:"https://www.reformworks.org/post/un80-stagnation-an-opportunity-for-bureaucratic-entrepreneurs",
+  [SIPA]:"https://multilateralism.sipa.columbia.edu/news/united-nations-currency-would-reduce-donor-dependency-and-improve-global-financial-stability",
+  [EC]:"https://casquebleu.substack.com/",
+};
+/* [id, name, theme, lvl, ws, src, stance, by, wp, adj, desc] */
+const EXT_RAW=[
+ ["H1","GA working group for Workstream 3","coord",1,"WS3","tt","Enabling",IPI,null,false,"A member-state-led GA working group for Workstream 3 (structural change), modelled on the WS2 Informal Ad Hoc Working Group; no WS3 equivalent exists."],
+ ["H2","Fund on comparative advantage","enable",1,"WS3","tt","New",IPI,18,true,"Donors support UN entities strictly on comparative advantage, not preferred partnerships or year-end contracting ease."],
+ ["H3","Allow nexus funding","enable",2,"WS3","tt","New",IPI,18,true,"Member states change siloed funding rules so humanitarian/development/peace projects aren't blocked by overlap between funding lines."],
+ ["H4","Direct funding to local NGOs","human",1,"WS3","tt","New",IPI,2,true,"Move bilateral funding toward the 25% Grand Bargain target for local and national NGOs, and ease donor documentation barriers."],
+ ["H5","Reduce earmarking","enable",1,"WS3","tt","New",IPI,18,true,"Cut earmarked funding and raise the unearmarked share, which has dropped to ~17% of pledges in 2026."],
+ ["H6","Professionalise AFP boards","coord",3,"WS3","tt","New",IPI,null,false,"Give agency/fund/programme boards dedicated resources and oversight-based membership (World Bank model); no UN80 package addresses board governance."],
+ ["H7","Reconfigure field presence","coord",3,"WS3","tt","New",IPI,5,true,"Make country-team configuration genuinely needs-based; fund presence only for entities required to deliver each cooperation framework. A sharper WP5."],
+ ["H8","In-country multi-donor trust funds","enable",2,"WS3","tt","New",IPI,18,true,"Shift to in-country multi-donor trust funds to fund country presence while avoiding earmarking."],
+ ["H9","External political backing for RCs/HCs","coord",1,"WS3","tt","New",IPI,5,true,"Give resident/humanitarian coordinators stronger external political backing against persona-non-grata declarations and visa denials."],
+ ["H10","Integrate country teams with peace operations","peace",3,"WS3","tt","New",IPI,1,true,"Mandate peace operations only for essential peacekeeping; country teams take on institution-building, governance, rights and quick-impact work. Goes beyond WP1 Action 14."],
+ ["C1","Cash-based execution","enable",1,"WS1","tt","New",CICP,null,false,"Authorise execution against cash actually collected (suspend Financial Regulation 5.1) so forced under-execution isn't read as surplus."],
+ ["C2","Collections-based credit returns","enable",1,"WS1","tt","New",CICP,null,false,"Adjust credit returns to reflect collections, not assessments (suspend Regulation 5.3), so non-payers don't benefit."],
+ ["C3","Payment incentives & deterrents","enable",2,"WS1","tt","New",CICP,null,false,"Tie High-Level Week speaking order to payment status and add GA sanctions on delinquent states."],
+ ["C4","Rule-bound external borrowing","enable",2,"WS1","tt","New",CICP,null,false,"Authorise temporary, rule-bound borrowing from governments for cash flow, building on the 1961 UN bond precedent."],
+ ["C5","Adapt the Financial Regulations & Rules","enable",2,"WS1","tt","New",CICP,null,false,"Use Article 97 discretion for targeted temporary exceptions; retain a share of interest income for liquidity buffers."],
+ ["C6","Recalibrate the Working Capital Fund","enable",2,"WS1","tt","New",CICP,null,false,"Recalibrate the Fund to roughly three months of expenditure, auto-adjusted to the approved budget."],
+ ["C7","Revise the financial rulebook + PPBME","mandate",3,"WS2","tt","New",CICP,20,true,"Amend Financial Regulations for rule-bound redeployment during shortfalls; revise PPBME to force explicit prioritisation when mandates are set. Touches WP20."],
+ ["C8","Renegotiate the scale of assessment","enable",3,"WS3","tt","New",CICP,null,false,"Broaden the assessed base to cut dependence on a few payers: tighten the ceiling, revisit discounts, raise floors."],
+ ["C9","Dedicated reserve fund, weighted rights","enable",3,"WS3","tt","New",CICP,null,false,"A reserve fund from voluntary contributions where contribution size shapes allocation rights, preserving one-country-one-vote for the regular budget."],
+ ["D1","Resist uniform cuts to essential functions","peace",1,"WS1","tt","Oppose",CICC,31,false,"Next SG publicly resists across-the-board cuts to diffuse-but-essential functions; the immediate test case is the proposed 10% peacekeeping cut. Opposes the WP31 cuts."],
+ ["D2","Mandate-resource gap analysis precondition","mandate",2,"WS2","tt","Enabling",CICC,20,true,"Make an authoritative mandate-resource gap analysis a condition of any further reform package. Aligns with WP20/21."],
+ ["D3","Sunset clauses for underfunded mandates","mandate",4,"WS2","tt","New",CICC,20,true,"Where mandates are persistently underfunded, apply sunset clauses — 'a mandate without resources is a slogan.' Deferred to ~2028."],
+ ["D4","Build coalitions during SG selection","coord",1,"EXT","tt","Enabling",CICC,null,false,"Build coalitions of states with the most stake in multilateralism during the SG selection process itself; no UN80 package touches SG selection."],
+ ["R1","Bureaucratic-entrepreneur pathway","mandate",1,"WS3","tt","New",RW,null,false,"Pursue incremental, bottom-up change through mid/senior officials who pilot innovations with voluntary funding and build minilateral coalitions."],
+ ["R2","Move change to the field","coord",1,"WS3","tt","New",RW,null,false,"Locate change processes in the field, away from HQ politics, pairing entities with different dynamics (the UNDP–DPPA climate-security model)."],
+ ["R3","Diverse donor coalitions","enable",1,"WS3","tt","New",RW,18,true,"Build donor coalitions diverse across regions, not just by contribution size, to spread financial and political risk."],
+ ["U1","Authorise a UN stablecoin (UNSTAC)","enable",3,"WS3","tt","New",SIPA,null,false,"GA authorises a UN stablecoin pegged to a five-currency basket, issued on a permissioned blockchain and backed 1:1 — a new revenue architecture, nothing comparable in UN80."],
+ ["U2","Create a UN Monetary Authority (UNMA)","enable",3,"WS3","tt","New",SIPA,null,false,"A new UN body to issue and manage the currency; seigniorage and fees (~$5bn/yr) would cut reliance on member-state contributions."],
+ ["P1","Centralised UN-level resource coordination","enable",3,"WS3","tt","New",GGI,null,false,"A system-wide integrated-budgeting process aligning money with geopolitics; Patz's headline idea, which never reached the WS3 agenda."],
+ ["P2","Honest system-wide assessment in 2027","mandate",1,"EXT","tt","Enabling",GGI,null,false,"The next SG commissions an honest first-year assessment of the system, moving from UN80's managerial approach to a political process."],
+ ["P3","Five-year UN-system mapping programme","coord",1,"WS3","tt","Enabling",GGI,29,true,"A five-year programme mapping all UN entities and their mandate overlaps — wider than the WP29 registry, addressed to academia."],
+ ["P4","Pathways for existing reform options","coord",1,"WS3","tt","Enabling",GGI,null,false,"Build realistic pathways for reform options already on the table (little of UN80 was new), fitting veto-holder interests via package deals."],
+ ["P5","High-level guidance + flexible coalitions","coord",2,"EXT","tt","New",GGI,null,false,"Governments give high-level guidance on preferred UN outcomes for the 2030s, prioritising flexible cross-bloc coalitions over established blocs."],
+ ["P6","Fund the multilateral backbone","enable",2,"WS3","tt","New",GGI,18,true,"Donors fund core/backbone multilateral structures instead of earmarked pet projects, tying voluntary money to agreed mandates. Closest to WP18."],
+ ["P7","Managers stabilise; states lead reform","coord",1,"WS1","tt","New",GGI,null,false,"Managers focus on stabilising the system within the reduced budget and making reallocation recommendations, leaving structural reform to states."],
+ ["P8","Elevate the CEB as cross-system coordinator","coord",2,"WS3","tt","New",GGI,10,true,"Give the Chief Executives Board a stronger cross-system coordination role in 2026–27 to broker compromises. Nearest to WP10."],
+ ["I1","Reject the UNFPA–UN Women merger","rights",1,"WS3","cso","Oppose",IPPF,4,false,"Member states should reject the single merged entity, arguing the assessment offers no clear rationale, cost-benefit analysis or risk mitigation. Opposes WP4."],
+ ["I2","Require a full cost-benefit analysis first","enable",1,"WS3","cso","Conditional",IPPF,4,false,"Make a full cost-benefit analysis (transition costs vs recurring efficiencies) a minimum precondition before any merger decision."],
+ ["I3","Slow the timeline; mandate consultation","coord",1,"WS3","cso","Conditional",IPPF,4,false,"Halt the expedited timeline and require substantive civil-society and country-level consultation before any decision."],
+ ["I4","Coordinate via accountability, not merger","coord",1,"WS3","cso","Alternative",IPPF,4,false,"Achieve coordination gains through strengthened accountability frameworks rather than restructuring; the mandates were designed to be complementary."],
+ ["I5","Legal safeguards for ICPD PoA / Beijing PfA","rights",1,"WS2","cso","Conditional",IPPF,4,false,"Put legal safeguards in place so the ICPD Programme of Action and Beijing Platform aren't reopened in the GA and exposed to regressive pressure."],
+ ["I6","Substantive civil-society decision role","rights",1,"EXT","cso","New",IPPF,4,false,"Treat civil society as a strategic actor with real influence over the WP4 decision, not tokenistic stakeholder management."],
+ ["F1","Reject the UNFPA–UN Women merger","rights",1,"WS3","cso","Oppose",FOS,4,false,"Reject the merger: only 20–30% of the mandates overlap, it contradicts the 2023 expert review, and it would dilute SRHR/gender capacity amid global rollback. Opposes WP4."],
+ ["F2","Pay assessed contributions in full and on time","enable",1,"WS1","cso","Alternative",FOS,null,false,"Fix liquidity at its root — non-payment, not duplication: only 25% of states paid on time in 2025; $1.586bn in arrears. No UN80 package covers financing architecture."],
+ ["F3","System-wide, not selective, mandate review","mandate",1,"WS2","cso","Alternative",FOS,26,true,"Replace selective targeting of UNFPA/UN Women with a credible system-wide review; FAO ($3.25bn) and WFP ($8.90bn) are larger, higher-overlap and face no merger."],
+ ["F4","Coordination via role clarity, not consolidation","coord",1,"WS3","cso","Alternative",FOS,4,false,"Achieve coordination through clear roles and accountability, not a merger; poor coordination stems from mandate ambiguity, not separation. Parallels IPPF I4."],
+ ["F5","Meaningful civil-society & national engagement","coord",1,"WS3","cso","Conditional",FOS,4,false,"Require substantive engagement throughout — not a single post-assessment town hall — including ministries, regional entities, partners and affected communities."],
+ ["F6","Reaffirm mandate protection + pillar equity","rights",1,"WS1","cso","Conditional",FOS,31,true,"Reaffirm mandate protection and reject disproportionate cuts: the human-rights pillar takes a 15.2% cut on a 6–7% budget share. Ties WP31 to mandate protection."],
+ ["E1","System-wide approach to UN policing","peace",1,"WS3","tt","New",EC,1,true,"Situate any UN Police strategic vision within a system-wide view of policing: over a dozen UN entities sit on the inter-agency task force on policing, so comparative advantage and function — not bureaucratic ambition — should drive the division of labour. Form must follow function."],
+ ["E2","Lower cross-pillar barriers in transitions","coord",1,"WS3","tt","New",EC,5,true,"Cut the administrative and cultural barriers that stop the development system drawing on peace-and-security expertise in transitions and non-mission settings, while respecting the distinct principles of country teams rather than shoehorning peacekeeping approaches into them."],
+ ["E3","Independent rethink of peace operations","peace",1,"WS3","tt","New",EC,1,true,"Treat the forthcoming SG peace-operations review as the start, not the end, of reflection; an independent perspective may be needed because departmental defensiveness prevents a clear-eyed rethink amid austerity and a changed international environment."],
+ ["E4","Reaffirm limits on gratis personnel","enable",1,"WS1","tt","New",EC,null,false,"Member states should reaffirm the GA resolution 51/243 limits on 'gratis personnel' (specialised, time-limited only). Type II gratis personnel rose 193% system-wide (121→355) and 985.7% at peacekeeping HQ (7→76) by 2022-23, functioning like earmarked contributions that create donor siloes of influence. No UN80 package addresses this."],
+ ["E5","Defenses against programmatic capture","enable",2,"WS1","tt","New",EC,18,true,"Build systematic defenses against programmatic capture: the UN has no policies or guidelines for when to decline capture-prone voluntary contributions, a growing risk as it leans more on autocratic states and revisionist powers. Develop explicit criteria for accepting or rejecting earmarked support."],
+ ["E6","Observer-style GA access + fee for private sector","enable",3,"EXT","tt","New",EC,null,false,"A thought experiment: let the GA grant private-sector entities an observer-style status (defined participation rights, no vote) for an annual fee set from a notional assessment rate based on revenue, with diversity criteria and caps. The private sector gave ~$574m to the UN system in 2024 ($152m to the Secretariat); top-50 Fortune firms might pay $2–10m each. Fees supplement, not replace, assessed contributions, keeping oversight with member states."],
+ ["E7","Integrated overhaul of contingent reimbursement","peace",3,"WS1","tt","New",EC,1,true,"Use the rare 2026 conjunction of the contingent-owned-equipment and personnel reimbursement review cycles to launch a GA-led overhaul into one integrated framework — modelled on the 2012 senior advisory group — meeting four objectives: subsidise troop/police contributors, incentivise mandate implementation, enable specialised capabilities, and stay affordable. Usage-based reimbursement alone is a quick fix that could worsen the UN's largest source of greenhouse-gas emissions."],
+ ["E8","Reassess the stabilisation / 'robust turn'","peace",1,"WS3","tt","New",EC,1,true,"Make an honest reassessment of the stabilisation / 'robust turn' central to the peace-operations review: peacekeeper casualties spiked after MONUSCO's Force Intervention Brigade (res 2098, 2013), and safety can't be fixed by training, equipment and prosecutions alone while missions become parties to conflict and forfeit impartiality."],
+ ["E9","Weigh IHL consequences when mandating","peace",1,"EXT","tt","New",EC,1,true,"The Security Council should weigh international-humanitarian-law consequences when mandating robust or stabilisation missions, or authorising UN support to non-UN forces (e.g. under res 2719): such roles can strip peacekeepers of protected non-combatant status and make them legitimate targets — a consequence poorly understood when robust mandates are adopted."],
+];
+const EXTERNAL=EXT_RAW.map(r=>({id:r[0],name:r[1],theme:r[2],lvl:r[3],ws:r[4],src:r[5],stance:r[6],by:r[7],wp:r[8],adj:r[9],desc:r[10]}));
+
+/* ===== GEOMETRY ===== */
+const C=500,MAXR=420,HOLE=78,SECT=360/THEMES.length;
+const d2r=d=>d*Math.PI/180;
+const polar=(r,d)=>({x:C+r*Math.cos(d2r(d)),y:C+r*Math.sin(d2r(d))});
+const band=lvl=>HOLE+(MAXR-HOLE)*(lvl-0.5)/4;
+const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function donut(rO,rI){
+  const o=polar(rO,0),o2=polar(rO,180),i=polar(rI,0),i2=polar(rI,180);
+  return `M${o.x} ${o.y} A${rO} ${rO} 0 1 1 ${o2.x} ${o2.y} A${rO} ${rO} 0 1 1 ${o.x} ${o.y} Z `+
+         `M${i.x} ${i.y} A${rI} ${rI} 0 1 0 ${i2.x} ${i2.y} A${rI} ${rI} 0 1 0 ${i.x} ${i.y} Z`;
+}
+function arc(r,a0,a1){const s=polar(r,a0),e=polar(r,a1);const large=(a1-a0)>180?1:0;return `M${s.x} ${s.y} A${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;}
+
+function computeLayout(items,view){
+  const blips=[],dividers=[],wpLabels=[];
+  const BW=(MAXR-HOLE)/4;
+  THEMES.forEach((theme,ti)=>{
+    const ti0=-90+ti*SECT, M=SECT*0.10, arc0=ti0+M, arcW=SECT-2*M;
+    const secLo=ti0+2, secHi=ti0+SECT-2;
+    const rb=r=>({rLo:Math.max(HOLE+14,r-BW*0.7),rHi:Math.min(MAXR-8,r+BW*0.7)});
+    const mine=items.filter(it=>it.theme===theme.id);
+    if(!mine.length)return;
+    const byWp=new Map();
+    mine.filter(i=>i.src==="un80").forEach(a=>{if(!byWp.has(a.wp))byWp.set(a.wp,[]);byWp.get(a.wp).push(a);});
+    const groups=[...byWp.keys()].sort((a,b)=>a-b).map(wp=>({wp,items:byWp.get(wp)}));
+    mine.filter(i=>i.src!=="un80").forEach(x=>groups.push({ext:x,items:[x]}));
+    const counts=groups.map(g=>g.items.length), total=counts.reduce((a,b)=>a+b,0);
+    const minW=arcW*0.045;
+    let widths=counts.map(c=>Math.max(arcW*c/total,minW));
+    const wsum=widths.reduce((a,b)=>a+b,0); widths=widths.map(w=>w*arcW/wsum);
+    let cur=arc0;
+    groups.forEach((g,gi)=>{
+      const w=widths[gi], gStart=cur, gMid=cur+w/2; cur+=w;
+      if(view==="actions" && gi>0) dividers.push({theme:theme.id,ang:gStart});
+      if(view==="packages"){
+        if(g.wp!=null){
+          const mean=avg(g.items.map(a=>a.lvl)), r=HOLE+(MAXR-HOLE)*(mean-0.5)/4, p=polar(r,gMid);
+          blips.push({kind:"wp",id:"wp"+g.wp,wp:g.wp,theme:theme.id,wpName:WP[g.wp][0],leads:WP[g.wp][1],src:"un80",stance:"official",acts:g.items,count:g.items.length,lvl:Math.round(mean),ang:gMid,r,x:p.x,y:p.y,size:9+Math.min(9,g.items.length),secLo,secHi,...rb(r)});
+        } else {const it=g.ext,r=band(it.lvl),p=polar(r,gMid);blips.push({...it,kind:"ext",count:1,ang:gMid,r,x:p.x,y:p.y,size:10,secLo,secHi,...rb(r)});}
+      } else {
+        const arr=g.items.slice().sort((a,b)=>a.lvl-b.lvl||(a.n||0)-(b.n||0)), N=arr.length;
+        arr.forEach((a,j)=>{
+          const ang=N===1?gMid:gStart+w*(0.12+0.76*(j/(N-1||1)));
+          const r=band(a.lvl)+((j%2)?7:-7), p=polar(r,ang);
+          if(a.src==="un80")blips.push({...a,kind:"action",count:1,ang,r,x:p.x,y:p.y,size:8.5,secLo,secHi,...rb(r)});
+          else blips.push({...a,kind:"ext",count:1,ang,r,x:p.x,y:p.y,size:9.5,secLo,secHi,...rb(r)});
+        });
+        if(g.wp!=null){const lp=polar(MAXR-14,gMid);wpLabels.push({x:lp.x,y:lp.y,text:g.wp});}
+      }
+    });
+  });
+  // collision relaxation — keep each contact inside its sector & near its level band
+  const clampAng=(a,lo,hi)=>{let v=a;while(v<lo)v+=360;while(v>=lo+360)v-=360;if(v>hi)v=(v-hi)<((lo+360)-v)?hi:lo;return v;};
+  for(let it=0;it<160;it++){
+    let moved=false;
+    for(let i=0;i<blips.length;i++)for(let j=i+1;j<blips.length;j++){
+      const a=blips[i],b=blips[j];let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||0.01;
+      const min=a.size+b.size+8;
+      if(d<min){const push=(min-d)/2,ux=dx/d,uy=dy/d;a.x-=ux*push;a.y-=uy*push;b.x+=ux*push;b.y+=uy*push;moved=true;}
+    }
+    for(const p of blips){
+      let ang=Math.atan2(p.y-C,p.x-C)*180/Math.PI, r=Math.hypot(p.x-C,p.y-C);
+      ang=clampAng(ang,p.secLo,p.secHi); r=Math.max(p.rLo,Math.min(p.rHi,r));
+      const pp=polar(r,ang);p.x=pp.x;p.y=pp.y;p.ang=ang;p.r=r;
+    }
+    if(!moved)break;
+  }
+  return {blips,dividers,wpLabels};
+}
+
+/* ===== MARKERS (all circular; FILL = stance, RING = source) ===== */
+function Rings({ring,r,color}){const c=color||RING_HEX;
+  if(ring==="solid")  return <circle r={r+3} fill="none" stroke={c} strokeWidth="1.6" opacity=".95"/>;
+  if(ring==="dashed") return <circle r={r+3} fill="none" stroke={c} strokeWidth="1.7" strokeDasharray="2.4 2.4" opacity=".95"/>;
+  if(ring==="double") return <g><circle r={r+2.5} fill="none" stroke={c} strokeWidth="1.3" opacity=".95"/><circle r={r+5.2} fill="none" stroke={c} strokeWidth="1.2" opacity=".7"/></g>;
+  return null;
+}
+function Dot({src,s}){const z=s||7;const sc=SOURCES[src]||SOURCES.un80;
+  return <g><circle r={z} fill={SWATCH_FILL} stroke="#0a2236" strokeWidth="1"/><Rings ring={sc.ring} r={z}/></g>;}
+
+/* ===== SONAR ===== */
+function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
+  const sweepRef=useRef(null),glow=useRef({}),aRef=useRef(-90);
+  const [hover,setHover]=useState(null);
+  const {blips,dividers,wpLabels}=layout;
+  useEffect(()=>{
+    if(reduced||!sweepOn){Object.values(glow.current).forEach(el=>{if(el)el.setAttribute("opacity","0.26");});return;}
+    let raf,last=performance.now();
+    const frame=now=>{const dt=(now-last)/1000;last=now;let a=aRef.current+44*dt;if(a>=270)a-=360;aRef.current=a;
+      if(sweepRef.current)sweepRef.current.setAttribute("transform",`rotate(${a} ${C} ${C})`);
+      for(const b of blips){const el=glow.current[b.id];if(!el)continue;
+        const d=((a-b.ang)%360+360)%360,inten=d<150?Math.pow(1-d/150,1.7):0;
+        const dim=(activeSector&&b.theme!==activeSector)?0.1:1;
+        el.setAttribute("opacity",(inten*0.8*dim).toFixed(3));}
+      raf=requestAnimationFrame(frame);};
+    raf=requestAnimationFrame(frame);return ()=>cancelAnimationFrame(raf);
+  },[blips,reduced,sweepOn,activeSector]);
+
+  const rings=[1,2,3,4].map(l=>HOLE+(MAXR-HOLE)*l/4);
+  const bandFill=["rgba(80,160,230,.05)","rgba(70,200,180,.06)","rgba(245,180,90,.07)","rgba(240,110,110,.11)"];
+  const themeCount=id=>blips.filter(b=>b.theme===id).reduce((s,b)=>s+(b.count||1),0);
+  let connector=null;
+  if(selected&&selected.kind==="ext"&&selected.wp&&view==="packages"){
+    const src=blips.find(b=>b.id===selected.id), tgt=blips.find(b=>b.kind==="wp"&&b.wp===selected.wp);
+    if(src&&tgt)connector={src,tgt,color:(STANCE[selected.stance]||STANCE.New).color,adj:selected.adj};
+  }
+
+  return (
+    <svg viewBox="0 0 1000 1000" width="100%" height="100%" role="img"
+      aria-label="Sonar of UN reform actions. Angle is the theme; distance from the centre is the degree of change, from incremental at the centre to dissolution at the rim.">
+      <defs>
+        <radialGradient id="screen" cx="50%" cy="50%" r="65%"><stop offset="0%" stopColor="#0E3A5C"/><stop offset="58%" stopColor="#082B47"/><stop offset="100%" stopColor="#05192B"/></radialGradient>
+        <radialGradient id="vig" cx="50%" cy="50%" r="50%"><stop offset="78%" stopColor="#000" stopOpacity="0"/><stop offset="100%" stopColor="#000" stopOpacity="0.45"/></radialGradient>
+        <radialGradient id="blipUN" cx="38%" cy="34%" r="75%"><stop offset="0%" stopColor="#D6F2FF"/><stop offset="45%" stopColor="#5FC0EE"/><stop offset="100%" stopColor="#2A7FB8"/></radialGradient>
+        <radialGradient id="sweepGrad"><stop offset="0%" stopColor="#8FD2F5" stopOpacity="0"/><stop offset="72%" stopColor="#4FB4E8" stopOpacity="0.05"/><stop offset="100%" stopColor="#9FE0FF" stopOpacity="0.30"/></radialGradient>
+        <filter id="soft"><feGaussianBlur stdDeviation="3.4"/></filter>
+      </defs>
+
+      <circle cx={C} cy={C} r={MAXR+62} fill="#03101D"/>
+      <circle cx={C} cy={C} r={MAXR} fill="url(#screen)"/>
+      {bandFill.map((f,i)=><path key={i} d={donut(rings[i],i===0?HOLE:rings[i-1])} fill={f} fillRule="evenodd"/>)}
+
+      {/* crosshair */}
+      <line x1={C-MAXR} y1={C} x2={C+MAXR} y2={C} stroke="rgba(127,196,240,.10)"/>
+      <line x1={C} y1={C-MAXR} x2={C} y2={C+MAXR} stroke="rgba(127,196,240,.10)"/>
+      {/* degree ticks */}
+      {Array.from({length:72}).map((_,i)=>{const a=i*5,inner=i%6===0?MAXR-14:MAXR-7,o=polar(MAXR,a),n=polar(inner,a);return <line key={i} x1={o.x} y1={o.y} x2={n.x} y2={n.y} stroke="rgba(127,196,240,.18)" strokeWidth={i%6===0?1.3:.7}/>;})}
+      {/* range rings */}
+      {rings.map((r,i)=><circle key={i} cx={C} cy={C} r={r} fill="none" stroke={i===3?"rgba(127,196,240,.32)":"rgba(127,196,240,.14)"} strokeWidth={i===3?1.5:1}/>)}
+      <circle cx={C} cy={C} r={HOLE} fill="none" stroke="rgba(127,196,240,.22)"/>
+
+      {/* sector spokes + active wedge */}
+      {THEMES.map((t,i)=>{const a0=-90+i*SECT,p=polar(MAXR,a0),act=activeSector===t.id;
+        const s=polar(MAXR,a0),e=polar(MAXR,a0+SECT);
+        return <g key={t.id}>{act&&<path d={`M${C} ${C} L${s.x} ${s.y} A${MAXR} ${MAXR} 0 0 1 ${e.x} ${e.y} Z`} fill={t.color} opacity="0.08"/>}
+          <line x1={C} y1={C} x2={p.x} y2={p.y} stroke={act?"rgba(127,196,240,.4)":"rgba(127,196,240,.12)"}/></g>;})}
+
+      {/* WP cluster dividers (action view) */}
+      {dividers.map((d,i)=>{const s=polar(HOLE,d.ang),e=polar(MAXR,d.ang);return <line key={i} x1={s.x} y1={s.y} x2={e.x} y2={e.y} stroke="rgba(127,196,240,.07)"/>;})}
+
+      {/* theme bezel arcs + labels */}
+      {THEMES.map((t,i)=>{const a0=-90+i*SECT+1.4,a1=-90+(i+1)*SECT-1.4,mid=-90+i*SECT+SECT/2;
+        const lp=polar(MAXR+34,mid),anchor=lp.x>C+8?"start":lp.x<C-8?"end":"middle",act=activeSector===t.id;
+        const cp=polar(MAXR+34,mid);
+        return <g key={t.id} style={{cursor:"pointer"}} onClick={()=>onPick&&onPick({sector:t.id})}>
+          <path d={arc(MAXR+9,a0,a1)} fill="none" stroke={t.color} strokeWidth={act?7:4.5} strokeLinecap="round" opacity={act?1:.82}/>
+          <text x={lp.x} y={cp.y-5} textAnchor={anchor} dominantBaseline="middle" style={{fontFamily:"var(--font-body)",fontSize:16,fontWeight:700,fill:act?t.color:"#BcdCEC"}}>{t.short}</text>
+          <text x={lp.x} y={cp.y+12} textAnchor={anchor} className="mono" style={{fontSize:11,fill:"rgba(173,210,225,.6)"}}>{themeCount(t.id)}</text>
+        </g>;})}
+
+      {/* range labels re-rendered above blips below */}
+
+      {/* sweep */}
+      <g ref={sweepRef} transform={`rotate(-90 ${C} ${C})`} style={{pointerEvents:"none"}}>
+        {!reduced&&sweepOn&&<path d={`M${C} ${C} L${C+MAXR} ${C} A${MAXR} ${MAXR} 0 0 1 ${C+MAXR*Math.cos(d2r(-46))} ${C+MAXR*Math.sin(d2r(-46))} Z`} fill="url(#sweepGrad)"/>}
+        {!reduced&&sweepOn&&<line x1={C} y1={C} x2={C+MAXR} y2={C} stroke="#A6E0FF" strokeWidth="1.6" opacity="0.8"/>}
+      </g>
+
+      {/* centre reticle */}
+      <circle cx={C} cy={C} r={HOLE-2} fill="#06243B" stroke="rgba(127,196,240,.28)"/>
+      <circle cx={C} cy={C} r={HOLE-12} fill="none" stroke="rgba(127,196,240,.16)"/>
+      <text x={C} y={C-5} textAnchor="middle" className="mono" style={{fontSize:12.5,fill:"#8FD2F5",letterSpacing:".05em"}}>STATUS QUO</text>
+      <text x={C} y={C+13} textAnchor="middle" className="mono" style={{fontSize:8.5,fill:"rgba(173,210,225,.6)",letterSpacing:".16em"}}>CENTRE</text>
+
+      {/* WP numbers (action view) */}
+      {wpLabels.map((l,i)=><text key={i} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="middle" className="mono" style={{fontSize:9.5,fill:"rgba(190,224,240,.42)"}}>{l.text}</text>)}
+
+      {/* connector: external proposal → targeted work package */}
+      {connector&&<g style={{pointerEvents:"none"}}>
+        <circle cx={connector.tgt.x} cy={connector.tgt.y} r={connector.tgt.size+7} fill="none" stroke={connector.color} strokeWidth="2" opacity=".9"/>
+        <line x1={connector.src.x} y1={connector.src.y} x2={connector.tgt.x} y2={connector.tgt.y} stroke={connector.color} strokeWidth="2" strokeDasharray={connector.adj?"2 6":"7 5"} opacity=".85"/>
+      </g>}
+
+      {/* blips — selected & hovered drawn last so they lift above neighbours */}
+      {[...blips].sort((a,b)=>{
+        const rank=x=>(selected&&selected.id===x.id)?2:(hover===x.id?1:0);
+        return rank(a)-rank(b);
+      }).map(b=>{const sc=SOURCES[b.src]||SOURCES.un80;const fc=fillOf(b);
+        const sel=selected&&selected.id===b.id;const hot=hover===b.id;const ext=b.kind==="ext";
+        const dim=(activeSector&&b.theme!==activeSector&&!sel&&!hot)?0.14:1;
+        const scale=(sel||hot)?1.42:1;const hit=Math.max(b.size+11,16);
+        return <g key={b.id} transform={`translate(${b.x} ${b.y})`} style={{cursor:"pointer"}} tabIndex={0} role="button"
+            aria-label={`${b.name||b.wpName}. ${sc.label}. ${(STANCE[b.stance]||STANCE.New).label}. ${LEVELS[(b.lvl||1)-1].label}.`}
+            onClick={e=>{e.stopPropagation();onPick&&onPick({blip:b});}}
+            onMouseEnter={()=>setHover(b.id)} onMouseLeave={()=>setHover(h=>h===b.id?null:h)}
+            onFocus={()=>setHover(b.id)} onBlur={()=>setHover(h=>h===b.id?null:h)}
+            onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onPick&&onPick({blip:b});}}}>
+          <title>{b.name||b.wpName}</title>
+          {/* generous invisible hit target */}
+          <circle r={hit} fill="transparent"/>
+          {ext&&<circle r={b.size+7} fill={fc} opacity={dim*0.22} filter="url(#soft)"/>}
+          <circle ref={el=>glow.current[b.id]=el} r={b.size+9} fill={ext?fc:"#4FB4E8"} opacity="0" filter="url(#soft)"/>
+          <g opacity={dim} style={{transform:`scale(${scale})`,transition:"transform .12s ease"}}>
+            {ext
+              ? <g><circle r={b.size} fill={fc} stroke="#06223a" strokeWidth="1"/><Rings ring={sc.ring} r={b.size}/></g>
+              : <g><circle r={b.size} fill="url(#blipUN)"/><circle r={b.size} fill="none" stroke="#CDEEFF" strokeWidth="1" opacity=".7"/>
+                {b.kind==="wp"&&<text textAnchor="middle" dominantBaseline="central" className="mono" style={{fontSize:b.size*0.85,fill:"#05233A",fontWeight:700,pointerEvents:"none"}}>{b.count}</text>}</g>}
+          </g>
+          {sel&&[[-1,-1],[1,-1],[-1,1],[1,1]].map((c,i)=>{const d=b.size+10,L=6;return <path key={i} d={`M${c[0]*d} ${c[1]*(d-L)} L${c[0]*d} ${c[1]*d} L${c[0]*(d-L)} ${c[1]*d}`} fill="none" stroke="#fff" strokeWidth="2"/>;})}
+        </g>;})}
+
+      {/* range labels (degree of change) — solid, high-contrast, above blips */}
+      {LEVELS.map((lv,i)=>{const r=HOLE+(MAXR-HOLE)*(i+0.5)/4;const p=polar(r,180);
+        const txt=`${lv.v} · ${lv.label}`;const w=txt.length*7.4+16;const c=["#5AA8E6","#46C8B4","#F5B45A","#F06E6E"][i];
+        return <g key={lv.v} style={{pointerEvents:"none"}}>
+          <rect x={p.x-w/2} y={p.y-11} width={w} height={22} rx={11} fill="#04263F" stroke={c} strokeWidth="1.1"/>
+          <circle cx={p.x-w/2+12} cy={p.y} r={3.4} fill={c}/>
+          <text x={p.x-w/2+22} y={p.y+0.5} dominantBaseline="middle" style={{fontFamily:"var(--font-body)",fontSize:13.5,fontWeight:600,fill:"#EAF4FB"}}>{txt}</text>
+        </g>;})}
+
+      <circle cx={C} cy={C} r={MAXR} fill="url(#vig)" style={{pointerEvents:"none"}}/>
+    </svg>
+  );
+}
+
+/* ===== UI ===== */
+const lbl={fontSize:11,fontWeight:600,letterSpacing:".07em",textTransform:"uppercase",color:"var(--text-2)"};
+const card={background:"var(--surface-card)",border:"1px solid var(--border)",borderRadius:12,padding:16};
+function Sw({src}){return <svg width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true"><Dot src={src} s={6}/></svg>;}
+function Chip({active,color,onClick,children}){return <button onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:7,padding:"6px 11px",borderRadius:999,border:active?`1.5px solid ${color}`:"1px solid var(--border)",background:active?"var(--blue-50)":"#fff",color:"var(--text-1)",fontSize:13,fontWeight:active?700:500}}><span style={{width:9,height:9,borderRadius:2,background:color,flexShrink:0}}/>{children}</button>;}
+
+function Detail({blip,allItems,onClose,onEdit,onJumpToWp,onJumpToExt,onBack,canBack,cluster,onCycle,onShowSources}){
+  if(!blip)return null;
+  const sc=SOURCES[blip.src]||SOURCES.un80,th=themeById(blip.theme),lv=LEVELS[(blip.lvl||1)-1];
+  const isUN=blip.src==="un80";
+  const title=blip.kind==="wp"?`WP#${blip.wp} — ${blip.wpName}`:blip.name;
+  // external proposals attached to this UN80 work package
+  const related=isUN?allItems.filter(i=>i.src!=="un80"&&i.wp===blip.wp):[];
+  const endorse=related.filter(i=>i.stance==="Endorse");
+  const oppose =related.filter(i=>i.stance==="Oppose");
+  const other  =related.filter(i=>i.stance!=="Endorse"&&i.stance!=="Oppose");
+  const chip={display:"inline-flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:7,fontSize:12.5,fontWeight:600,cursor:"pointer"};
+  const ExtRow=x=>{const xc=(STANCE[x.stance]||STANCE.New).color;return (
+    <button key={x.id} onClick={()=>onJumpToExt(x.id)} style={{display:"flex",gap:9,alignItems:"flex-start",width:"100%",textAlign:"left",padding:"8px 9px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",cursor:"pointer"}}>
+      <span style={{width:9,height:9,borderRadius:2,background:xc,marginTop:4,flexShrink:0}}/>
+      <span style={{flex:1}}><span style={{fontSize:13,fontWeight:600,color:"var(--text-1)",display:"block",lineHeight:1.3}}>{x.name}</span>
+        <span style={{fontSize:11.5,color:"var(--text-2)"}}>{(STANCE[x.stance]||{}).label} · {x.by}</span></span>
+      <span aria-hidden="true" style={{color:"var(--blue-500)",fontSize:15,marginTop:1}}>→</span>
+    </button>);};
+  return (<div role="dialog" aria-label={title} style={{position:"absolute",top:0,right:0,height:"100%",width:"min(380px,92%)",background:"var(--surface-card)",borderLeft:"1px solid var(--border)",boxShadow:"-8px 0 28px rgba(10,47,78,.12)",zIndex:40,display:"flex",flexDirection:"column"}}>
+    {canBack&&<button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",border:"none",borderBottom:"1px solid var(--border-subtle)",background:"var(--blue-50)",color:"var(--blue-600)",fontWeight:600,fontSize:12.5,textAlign:"left",cursor:"pointer"}}>← Back</button>}
+    {cluster&&cluster.len>1&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,padding:"8px 18px",borderBottom:"1px solid var(--border-subtle)",background:"#FFF8E8"}}>
+      <span style={{fontSize:12,color:"var(--text-2)"}}>Contact <b>{cluster.pos}</b> of <b>{cluster.len}</b> stacked here</span>
+      <button onClick={onCycle} style={{...chip,border:"1px solid var(--border)",background:"#fff",color:"var(--blue-600)"}}>Next ›</button>
+    </div>}
+    <div style={{padding:"16px 18px",borderBottom:"1px solid var(--border-subtle)",display:"flex",gap:12,alignItems:"flex-start"}}>
+      <Sw src={blip.src}/>
+      <div style={{flex:1}}><h2 style={{fontSize:16.5,fontWeight:700,lineHeight:1.3,color:"var(--blue-800)"}}>{title}</h2>
+        <p style={{fontSize:12.5,color:"var(--text-2)",marginTop:2}}>{sc.label}{blip.kind==="action"?` · action ${blip.n}`:blip.kind==="wp"?` · ${blip.count} actions`:""}</p></div>
+      <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",fontSize:20,color:"var(--text-2)",lineHeight:1,cursor:"pointer"}}>✕</button>
+    </div>
+    <div style={{padding:"14px 18px",overflowY:"auto",flex:1}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
+        <span style={{...lbl,padding:"4px 9px",borderRadius:6,background:"var(--blue-50)",border:`1px solid ${th.color}55`,color:"var(--text-1)"}}>{th.full}</span>
+        <span style={{...lbl,padding:"4px 9px",borderRadius:6,background:"var(--blue-50)",border:"1px solid var(--border)",color:"var(--text-1)"}}>{lv.v}· {lv.label}</span>
+        {blip.ws&&<span style={{...lbl,padding:"4px 9px",borderRadius:6,background:"var(--blue-50)",border:"1px solid var(--border)",color:"var(--text-1)"}}>{wsFull(blip.ws)}</span>}
+        {blip.stance&&STANCE[blip.stance]&&<span style={{...lbl,padding:"4px 9px",borderRadius:6,background:STANCE[blip.stance].color+"22",border:`1px solid ${STANCE[blip.stance].color}`,color:"var(--text-1)"}}>{STANCE[blip.stance].label}</span>}
+      </div>
+      {blip.leads&&<p style={{fontSize:12,color:"var(--text-2)",marginBottom:10}}><span style={{...lbl,display:"block",marginBottom:2}}>Leads</span><span className="mono" style={{fontSize:11}}>{blip.leads}</span></p>}
+      {blip.by&&<p style={{fontSize:12,color:"var(--text-2)",marginBottom:10}}><span style={{...lbl,display:"block",marginBottom:2}}>Source</span>{blip.by}</p>}
+      {blip.kind==="ext"&&blip.wp&&<div style={{marginBottom:12}}><span style={{...lbl,display:"block",marginBottom:5}}>Relates to</span>
+        <button onClick={()=>onJumpToWp(blip.wp)} style={{...chip,border:"1px solid var(--blue-300)",background:"var(--blue-50)",color:"var(--blue-700)"}}>
+          WP#{blip.wp} · {WP[blip.wp]?WP[blip.wp][0]:""} <span aria-hidden="true">→</span></button>
+        <p style={{fontSize:11.5,color:"var(--text-3)",marginTop:5}}>{blip.adj?"Adjacent — feeds into this work package.":"Direct target of this proposal."} Click to jump to it.</p></div>}
+      {blip.desc&&<p style={{fontSize:14,lineHeight:1.6,color:"var(--text-1)"}}>{blip.desc}</p>}
+
+      {isUN&&related.length>0&&<div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--border-subtle)"}}>
+        <p style={{...lbl,marginBottom:8}}>External positions on this work package</p>
+        {endorse.length>0&&<div style={{marginBottom:10}}><div style={{fontSize:12,fontWeight:700,color:"#5a9e2e",marginBottom:5}}>Endorses ({endorse.length})</div><div style={{display:"flex",flexDirection:"column",gap:6}}>{endorse.map(ExtRow)}</div></div>}
+        {oppose.length>0&&<div style={{marginBottom:10}}><div style={{fontSize:12,fontWeight:700,color:"#d24545",marginBottom:5}}>Opposes ({oppose.length})</div><div style={{display:"flex",flexDirection:"column",gap:6}}>{oppose.map(ExtRow)}</div></div>}
+        {other.length>0&&<div><div style={{fontSize:12,fontWeight:700,color:"var(--text-2)",marginBottom:5}}>Related ({other.length})</div><div style={{display:"flex",flexDirection:"column",gap:6}}>{other.map(ExtRow)}</div></div>}
+      </div>}
+      {isUN&&related.length===0&&<p style={{fontSize:12,color:"var(--text-3)",marginTop:14,paddingTop:12,borderTop:"1px solid var(--border-subtle)",fontStyle:"italic"}}>No external proposals in the radar target this work package yet.</p>}
+
+      {blip.kind==="wp"&&blip.acts&&<div style={{marginTop:14}}><p style={{...lbl,marginBottom:8}}>Actions ({blip.acts.length})</p>
+        <ul style={{listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>{blip.acts.slice().sort((a,b)=>a.lvl-b.lvl).map(a=><li key={a.id} style={{fontSize:13,lineHeight:1.45,color:"var(--text-1)",paddingLeft:30,position:"relative"}}><span className="mono" style={{position:"absolute",left:0,top:1,color:th.color,fontSize:10.5}}>L{a.lvl}</span>{a.name}</li>)}</ul></div>}
+    </div>
+    <div style={{padding:"12px 18px",borderTop:"1px solid var(--border-subtle)",display:"flex",gap:8,flexDirection:"column"}}>
+      {isUN&&<a href="https://un80actions.un.org/" target="_blank" rel="noopener noreferrer" style={{display:"block",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",textDecoration:"none"}}>View on un80actions.un.org →</a>}
+      {!isUN&&<button onClick={()=>onShowSources&&onShowSources(blip.by)} style={{display:"block",width:"100%",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",cursor:"pointer"}}>View all sources →</button>}
+      <button onClick={()=>onEdit(blip)} style={{width:"100%",padding:"9px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontWeight:600,fontSize:13,color:"var(--blue-600)",cursor:"pointer"}}>Edit this item</button>
+    </div>
+  </div>);
+}
+
+function EditForm({draft,setDraft,onSave,onCancel,onDelete,isNew}){
+  const set=(k,v)=>setDraft({...draft,[k]:v});
+  return (<div role="dialog" aria-label={isNew?"Add proposal":"Edit item"} style={{position:"absolute",top:0,right:0,height:"100%",width:"min(380px,92%)",background:"var(--surface-card)",borderLeft:"1px solid var(--border)",boxShadow:"-8px 0 28px rgba(10,47,78,.12)",zIndex:50,display:"flex",flexDirection:"column"}}>
+    <div style={{padding:"16px 18px",borderBottom:"1px solid var(--border-subtle)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><h2 style={{fontSize:16,fontWeight:700,color:"var(--blue-800)"}}>{isNew?"Add a proposal":"Edit item"}</h2><button onClick={onCancel} aria-label="Close" style={{background:"none",border:"none",fontSize:20,color:"var(--text-2)"}}>✕</button></div>
+    <div style={{padding:"14px 18px",overflowY:"auto",flex:1,display:"flex",flexDirection:"column",gap:14}}>
+      <label><span style={{...lbl,display:"block",marginBottom:5}}>Name</span><input value={draft.name} onChange={e=>set("name",e.target.value)} placeholder="Short title" style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1px solid var(--border)",fontSize:14,fontFamily:"inherit"}}/></label>
+      <div><span style={{...lbl,display:"block",marginBottom:6}}>Theme (sector)</span><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{THEMES.map(t=><button key={t.id} onClick={()=>set("theme",t.id)} style={{padding:"5px 9px",borderRadius:7,fontSize:12,fontWeight:draft.theme===t.id?700:500,border:draft.theme===t.id?`1.5px solid ${t.color}`:"1px solid var(--border)",background:draft.theme===t.id?"var(--blue-50)":"#fff",color:"var(--text-1)"}}>{t.short}</button>)}</div></div>
+      <div><span style={{...lbl,display:"block",marginBottom:6}}>Workstream</span><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{WORKSTREAMS.map(w=><button key={w.id} onClick={()=>set("ws",w.id)} style={{padding:"5px 9px",borderRadius:7,fontSize:12,fontWeight:draft.ws===w.id?700:500,border:draft.ws===w.id?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:draft.ws===w.id?"var(--blue-50)":"#fff",color:"var(--text-1)"}}>{w.short}</button>)}</div></div>
+      <div><span style={{...lbl,display:"block",marginBottom:6}}>Source</span><div style={{display:"flex",flexDirection:"column",gap:5}}>{Object.entries(SOURCES).map(([k,s])=><button key={k} onClick={()=>set("src",k)} style={{display:"flex",alignItems:"center",gap:9,padding:"7px 9px",borderRadius:8,textAlign:"left",border:draft.src===k?`1.5px solid var(--blue-500)`:"1px solid var(--border)",background:draft.src===k?"var(--blue-50)":"#fff",fontSize:13,fontWeight:draft.src===k?700:500,color:"var(--text-1)"}}><Sw src={k}/>{s.label}</button>)}</div></div>
+      <div><span style={{...lbl,display:"block",marginBottom:6}}>Stance toward UN80</span><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{STANCE_ORDER.filter(s=>s!=="official").map(s=><button key={s} onClick={()=>set("stance",s)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 9px",borderRadius:7,fontSize:12,fontWeight:draft.stance===s?700:500,border:draft.stance===s?`1.5px solid ${STANCE[s].color}`:"1px solid var(--border)",background:draft.stance===s?"var(--blue-50)":"#fff",color:"var(--text-1)"}}><span style={{width:9,height:9,borderRadius:2,background:STANCE[s].color}}/>{STANCE[s].label}</button>)}</div></div>
+      <div><span style={{...lbl,display:"block",marginBottom:6}}>Degree of change · centre → rim</span><div style={{display:"flex",flexDirection:"column",gap:5}}>{LEVELS.map(l=><button key={l.v} onClick={()=>set("lvl",l.v)} style={{padding:"7px 10px",borderRadius:8,textAlign:"left",border:draft.lvl===l.v?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:draft.lvl===l.v?"var(--blue-50)":"#fff",color:"var(--text-1)"}}><span style={{fontSize:13,fontWeight:draft.lvl===l.v?700:600}}><span className="mono">{l.v}·</span> {l.label}</span><span style={{display:"block",fontSize:11.5,color:"var(--text-2)"}}>{l.desc}</span></button>)}</div></div>
+      <label><span style={{...lbl,display:"block",marginBottom:5}}>Proposed by (optional)</span><input value={draft.by||""} onChange={e=>set("by",e.target.value)} placeholder="e.g. think tank, coalition, Member State" style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1px solid var(--border)",fontSize:13.5,fontFamily:"inherit"}}/></label>
+      <label><span style={{...lbl,display:"block",marginBottom:5}}>Description</span><textarea value={draft.desc||""} onChange={e=>set("desc",e.target.value)} rows={4} placeholder="What is the idea?" style={{width:"100%",padding:"9px 11px",borderRadius:8,border:"1px solid var(--border)",fontSize:13.5,fontFamily:"inherit",resize:"vertical"}}/></label>
+    </div>
+    <div style={{padding:"12px 18px",borderTop:"1px solid var(--border-subtle)",display:"flex",gap:8}}>{!isNew&&<button onClick={onDelete} style={{padding:"9px 12px",borderRadius:8,border:"1px solid #F0A0A0",background:"#FDECEA",color:"#C13030",fontWeight:600,fontSize:13}}>Delete</button>}<div style={{flex:1}}/><button onClick={onCancel} style={{padding:"9px 14px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontWeight:600,fontSize:13,color:"var(--text-1)"}}>Cancel</button><button onClick={onSave} disabled={!draft.name.trim()} style={{padding:"9px 16px",borderRadius:8,border:"none",background:draft.name.trim()?"var(--blue-500)":"#cdd4dc",color:"#fff",fontWeight:700,fontSize:13}}>{isNew?"Add":"Save"}</button></div>
+  </div>);
+}
+
+/* ===== SOURCES PANEL ===== */
+function SourcesPanel({docs,onClose,highlight}){
+  return (<div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(6,29,48,.45)",zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div onClick={e=>e.stopPropagation()} role="dialog" aria-label="Source documents" style={{background:"var(--surface-card)",borderRadius:14,maxWidth:520,width:"100%",maxHeight:"82%",display:"flex",flexDirection:"column",boxShadow:"0 18px 50px rgba(6,29,48,.4)"}}>
+      <div style={{padding:"16px 20px",borderBottom:"1px solid var(--border-subtle)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div><h2 style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:900,color:"var(--blue-800)"}}>Where the external proposals come from</h2>
+          <p style={{fontSize:12.5,color:"var(--text-2)",marginTop:3}}>{docs.length} source documents · {docs.reduce((s,d)=>s+d[1],0)} proposals</p></div>
+        <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",fontSize:22,color:"var(--text-2)",cursor:"pointer"}}>✕</button>
+      </div>
+      <div style={{padding:"12px 20px",overflowY:"auto"}}>
+        <ul style={{listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
+          {docs.map(([name,n])=>{const hi=highlight&&name===highlight;const url=SOURCE_URLS[name];
+            const inner=<React.Fragment>
+              <span style={{flex:1,minWidth:0}}><span style={{fontSize:13.5,color:url?"var(--blue-700)":"var(--text-1)",lineHeight:1.4,fontWeight:hi?700:url?600:400}}>{name}</span>
+                {hi&&<span style={{fontSize:11,color:"var(--blue-600)",fontWeight:600,marginLeft:6}}>· this proposal</span>}
+                {url&&<span aria-hidden="true" style={{color:"var(--blue-500)",marginLeft:6}}>↗</span>}</span>
+              <span className="mono" style={{fontSize:12,color:"var(--blue-600)",fontWeight:700,whiteSpace:"nowrap"}}>{n} {n===1?"proposal":"proposals"}</span>
+            </React.Fragment>;
+            const style={display:"flex",justifyContent:"space-between",gap:12,alignItems:"baseline",padding:"11px 12px",borderRadius:9,border:hi?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:hi?"#fff":"var(--blue-50)",boxShadow:hi?"0 0 0 3px rgba(26,123,184,.12)":"none",textDecoration:"none"};
+            return <li key={name}>{url
+              ? <a href={url} target="_blank" rel="noopener noreferrer" style={style}>{inner}</a>
+              : <div style={style}>{inner}</div>}</li>;})}
+        </ul>
+        <p style={{fontSize:11.5,color:"var(--text-3)",marginTop:12,lineHeight:1.5}}>UN80 official actions are sourced from the UN80 Initiative Action Plan and the live tracker at un80actions.un.org (linked on each UN80 contact's card).</p>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ===== APP ===== */
+function App(){
+  const [items,setItems]=useState(()=>[...UN80,...EXTERNAL]);
+  const [view,setView]=useState("packages");
+  const [activeSector,setActiveSector]=useState(null);
+  const [srcFilter,setSrcFilter]=useState(()=>new Set(Object.keys(SOURCES)));
+  const [wsFilter,setWsFilter]=useState(()=>new Set(["WS1","WS2","WS3","EXT"]));
+  const [stanceFilter,setStanceFilter]=useState(()=>new Set(STANCE_ORDER));
+  const [selId,setSelId]=useState(null);
+  const [navStack,setNavStack]=useState([]);
+  const [cluster,setCluster]=useState(null);
+  const [showSources,setShowSources]=useState(false);
+  const [srcHighlight,setSrcHighlight]=useState(null);
+  const [editing,setEditing]=useState(null);
+  const [editIsNew,setEditIsNew]=useState(false);
+  const [sweepOn,setSweepOn]=useState(true);
+  const [toast,setToast]=useState("");
+  const fileRef=useRef(null);
+  const reduced=useMemo(()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,[]);
+  const isMobile=useMemo(()=>window.innerWidth<900,[]);
+  const flash=m=>{setToast(m);setTimeout(()=>setToast(""),2200);};
+
+  const layout=useMemo(()=>{
+    const list=items.filter(i=>srcFilter.has(i.src||"un80")&&wsFilter.has(i.ws||"EXT")&&stanceFilter.has(i.stance||"official"));
+    return computeLayout(list,view);
+  },[items,srcFilter,wsFilter,stanceFilter,view]);
+  const selected=useMemo(()=>selId?(layout.blips.find(b=>b.id===selId)||null):null,[selId,layout]);
+
+  const counts=useMemo(()=>{const un=items.filter(i=>(i.src||"un80")==="un80").length;return {un,nw:items.length-un};},[items]);
+
+  // distinct external source documents, for the Sources panel
+  const sourceDocs=useMemo(()=>{const m=new Map();items.filter(i=>i.src!=="un80").forEach(i=>{const k=i.by||"Unattributed";m.set(k,(m.get(k)||0)+1);});return [...m.entries()].sort((a,b)=>b[1]-a[1]);},[items]);
+
+  function ensureVisible(it){
+    if(it){if(!srcFilter.has(it.src))setSrcFilter(p=>new Set(p).add(it.src));
+      if(!wsFilter.has(it.ws))setWsFilter(p=>new Set(p).add(it.ws));
+      if(!stanceFilter.has(it.stance))setStanceFilter(p=>new Set(p).add(it.stance));}
+  }
+  function clusterAt(b){const near=layout.blips.filter(o=>Math.hypot(o.x-b.x,o.y-b.y)<=(o.size+b.size+10));
+    if(near.length<2)return null;const ids=near.map(o=>o.id);return {ids,idx:Math.max(0,ids.indexOf(b.id))};}
+  function pick(ev){
+    if(ev.blip){setNavStack([]);setCluster(clusterAt(ev.blip));setSelId(ev.blip.id);}
+    else if(ev.sector)setActiveSector(a=>a===ev.sector?null:ev.sector);
+  }
+  function cycleCluster(){if(!cluster)return;const ni=(cluster.idx+1)%cluster.ids.length;setCluster({...cluster,idx:ni});setSelId(cluster.ids[ni]);}
+  function jumpToWp(wp){setNavStack(s=>[...s,selId]);setCluster(null);setView("packages");
+    setSrcFilter(p=>new Set(p).add("un80"));setWsFilter(new Set(["WS1","WS2","WS3","EXT"]));setStanceFilter(p=>new Set(p).add("official"));
+    setSelId("wp"+wp);}
+  function jumpToExt(id){const it=items.find(x=>x.id===id);setNavStack(s=>[...s,selId]);setCluster(null);ensureVisible(it);setSelId(id);}
+  function goBack(){setCluster(null);if(navStack.length===0){setSelId(null);return;}const prev=navStack[navStack.length-1];setNavStack(navStack.slice(0,-1));setSelId(prev??null);}
+  function closeDetail(){setSelId(null);setNavStack([]);setCluster(null);}
+
+  function startAdd(){closeDetail();setEditIsNew(true);setEditing({id:"new"+Date.now(),name:"",theme:"devt",ws:"EXT",src:"tt",lvl:2,stance:"New",by:"",desc:""});}
+  function startEdit(b){setEditIsNew(false);setEditing({...b,src:b.src||"un80",name:b.name||b.wpName});}
+  function saveEdit(){const d={...editing,name:editing.name.trim()};setItems(p=>p.some(x=>x.id===d.id)?p.map(x=>x.id===d.id?{...x,...d}:x):[...p,d]);setEditing(null);flash(editIsNew?"Proposal added":"Saved");}
+  function deleteItem(){setItems(p=>p.filter(x=>x.id!==editing.id));setEditing(null);closeDetail();flash("Deleted");}
+  const toggle=(s,setS,k)=>setS(p=>{const n=new Set(p);n.has(k)?n.delete(k):n.add(k);return n;});
+  function exportJSON(){const b=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="reform-radar-data.json";a.click();URL.revokeObjectURL(u);flash("Data exported");}
+  function downloadTemplate(){
+    const example=[{id:"EXAMPLE-1",name:"Short title of the proposal",theme:"coord",lvl:2,ws:"WS3",src:"tt",stance:"New",by:"Institution — Author",wp:10,adj:true,desc:"One or two sentences on the idea and how it relates to a UN80 work package. Delete this row and add your own."}];
+    const b=new Blob([JSON.stringify(example,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="reform-radar-template.json";a.click();URL.revokeObjectURL(u);flash("Template downloaded");
+  }
+  function importJSON(e){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){setItems(d);closeDetail();flash("Data imported");}else flash("File not recognised");}catch{flash("Could not read file");}};r.readAsText(f);e.target.value="";}
+  const railW=isMobile?"100%":300;
+
+  return (<div style={{minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+    <header style={{padding:isMobile?"16px 18px":"20px 28px",borderBottom:"1px solid var(--border)",background:"var(--surface-card)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16,flexWrap:"wrap"}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}><span className="mono" style={{fontSize:11,letterSpacing:".18em",color:"var(--blue-500)",fontWeight:700}}>UN80 INITIATIVE</span><span style={{fontSize:11,color:"var(--text-3)"}}>tracking reform actions & proposals</span></div>
+          <h1 style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:isMobile?"26px":"34px",color:"var(--blue-800)",lineHeight:1.1,marginTop:6}}>Reform Proposals Radar</h1>
+        </div>
+        <button onClick={()=>{setSrcHighlight(null);setShowSources(true);}} style={{flexShrink:0,display:"inline-flex",alignItems:"center",gap:7,padding:"9px 14px",borderRadius:10,border:"1px solid var(--blue-300)",background:"var(--blue-50)",color:"var(--blue-700)",fontWeight:700,fontSize:13,cursor:"pointer"}}>View all sources <span className="mono" style={{fontSize:12,opacity:.8}}>({sourceDocs.length})</span></button>
+      </div>
+      <div style={{display:"flex",gap:isMobile?14:26,marginTop:12,flexWrap:"wrap"}}>{[["UN80 actions",counts.un],["External proposals",counts.nw],["Showing",view==="packages"?"31 pkgs + "+counts.nw:"87 actions + "+counts.nw]].map(([k,v])=><div key={k}><div style={lbl}>{k}</div><div className="mono" style={{fontSize:20,fontWeight:600,color:"var(--blue-700)"}}>{v}</div></div>)}</div>
+    </header>
+
+    <div style={{flex:1,display:"flex",flexDirection:isMobile?"column":"row",position:"relative"}}>
+      <aside style={{width:railW,flexShrink:0,padding:16,display:"flex",flexDirection:"column",gap:14,borderRight:isMobile?"none":"1px solid var(--border)",borderBottom:isMobile?"1px solid var(--border)":"none",background:"var(--surface-page)",overflowY:"auto"}}>
+        <button onClick={startAdd} style={{padding:"11px",borderRadius:10,border:"none",background:"var(--blue-500)",color:"#fff",fontWeight:700,fontSize:14}}>+ Add a proposal</button>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Show</div>
+          <div style={{display:"flex",gap:6}}>{[["packages","Work packages"],["actions","Actions"]].map(([g,l])=><button key={g} onClick={()=>{setView(g);}} style={{flex:1,padding:"8px",borderRadius:8,fontSize:13,fontWeight:view===g?700:500,border:view===g?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:view===g?"var(--blue-50)":"#fff",color:"var(--text-1)"}}>{l}</button>)}</div>
+          <p style={{fontSize:11.5,color:"var(--text-3)",marginTop:9,lineHeight:1.4}}>{view==="packages"?"One contact per work package, sized by how many actions it holds.":"Every action, clustered by work package within its theme."}</p>
+        </div>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Focus a sector</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}><button onClick={()=>setActiveSector(null)} style={{padding:"6px 11px",borderRadius:999,fontSize:13,fontWeight:!activeSector?700:500,border:!activeSector?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:!activeSector?"var(--blue-50)":"#fff",color:"var(--text-1)"}}>All</button>
+          {THEMES.map(t=><Chip key={t.id} active={activeSector===t.id} color={t.color} onClick={()=>setActiveSector(activeSector===t.id?null:t.id)}>{t.short}</Chip>)}</div>
+        </div>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Source · the ring</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>{Object.entries(SOURCES).map(([k,s])=>{const on=srcFilter.has(k);return <button key={k} onClick={()=>toggle(srcFilter,setSrcFilter,k)} aria-pressed={on} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 8px",borderRadius:8,border:"1px solid "+(on?"var(--border)":"transparent"),background:on?"#fff":"transparent",opacity:on?1:0.4,fontSize:13,color:"var(--text-1)",textAlign:"left"}}><Sw src={k}/>{s.label}</button>;})}</div>
+          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>The ring around a contact shows who proposed it. UN80 actions have no ring. The fill colour shows stance (below).</p>
+        </div>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Filter by workstream</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{WORKSTREAMS.map(w=>{const on=wsFilter.has(w.id);return <button key={w.id} onClick={()=>toggle(wsFilter,setWsFilter,w.id)} aria-pressed={on} style={{padding:"5px 10px",borderRadius:999,fontSize:12.5,fontWeight:on?600:500,border:"1px solid "+(on?"var(--border)":"transparent"),background:on?"#fff":"transparent",opacity:on?1:0.4,color:"var(--text-1)"}}>{w.short}</button>;})}</div>
+        </div>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Stance · the fill colour</div>
+          <div style={{display:"flex",flexDirection:"column",gap:5}}>{STANCE_ORDER.map(s=>{const on=stanceFilter.has(s);return <button key={s} onClick={()=>toggle(stanceFilter,setStanceFilter,s)} aria-pressed={on} style={{display:"flex",alignItems:"center",gap:9,padding:"5px 8px",borderRadius:8,border:"1px solid "+(on?"var(--border)":"transparent"),background:on?"#fff":"transparent",opacity:on?1:0.4,fontSize:12.5,color:"var(--text-1)",textAlign:"left"}}><span style={{width:13,height:13,borderRadius:"50%",background:STANCE[s].color,flexShrink:0,border:"1px solid rgba(0,0,0,.15)"}}/>{STANCE[s].label}</button>;})}</div>
+          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>A contact's fill colour shows where it stands on a UN80 action. Select one to see the line to the package it targets.</p>
+        </div>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Distance from centre · degree of change</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>{LEVELS.map((l,i)=><div key={l.v} style={{display:"flex",gap:9,alignItems:"baseline"}}><span style={{width:10,height:10,borderRadius:2,marginTop:3,background:["#5AA8E6","#46C8B4","#F5B45A","#F06E6E"][i],flexShrink:0}}/><div><div style={{fontSize:13,fontWeight:600}}>{l.label}</div><div style={{fontSize:11.5,color:"var(--text-2)",lineHeight:1.35}}>{l.desc}</div></div></div>)}</div>
+          <p style={{fontSize:11.5,color:"var(--text-3)",marginTop:10,lineHeight:1.4}}>Centre = keep the status quo. The rim = take it apart.</p>
+        </div>
+
+        <div style={card}><div style={{...lbl,marginBottom:9}}>Your data</div>
+          <div style={{display:"flex",gap:6}}><button onClick={exportJSON} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontSize:12.5,fontWeight:600,color:"var(--blue-600)"}}>Export</button><button onClick={()=>fileRef.current&&fileRef.current.click()} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontSize:12.5,fontWeight:600,color:"var(--blue-600)"}}>Import</button><input ref={fileRef} type="file" accept="application/json" onChange={importJSON} style={{display:"none"}}/></div>
+          <button onClick={downloadTemplate} style={{width:"100%",marginTop:6,padding:"8px",borderRadius:8,border:"1px dashed var(--blue-300)",background:"var(--blue-50)",fontSize:12.5,fontWeight:600,color:"var(--blue-600)"}}>Download import template</button>
+          <p style={{fontSize:10.5,color:"var(--text-3)",marginTop:7,lineHeight:1.5}}>Template is a JSON array with one example row and every field filled in. Valid codes — <b>theme</b>: {THEMES.map(t=>t.id).join(", ")}; <b>src</b>: {Object.keys(SOURCES).join(", ")}; <b>ws</b>: WS1, WS2, WS3, EXT; <b>lvl</b>: 1–4; <b>stance</b>: {STANCE_ORDER.filter(s=>s!=="official").join(", ")}; <b>wp</b>: 1–31 or null; <b>adj</b>: true/false.</p>
+          <label style={{display:"flex",alignItems:"center",gap:8,marginTop:10,fontSize:12.5,color:"var(--text-2)",cursor:"pointer"}}><input type="checkbox" checked={sweepOn} onChange={e=>setSweepOn(e.target.checked)}/> Sonar sweep</label>
+          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4,fontStyle:"italic"}}>Changes live in this browser session only. Export to keep your work.</p>
+        </div>
+      </aside>
+
+      <main style={{flex:1,position:"relative",display:"flex",alignItems:"center",justifyContent:"center",padding:isMobile?16:28,background:"radial-gradient(circle at 50% 40%, #0a2236 0%, #05101b 100%)",minHeight:isMobile?460:0}}>
+        <div style={{width:"100%",maxWidth:700,aspectRatio:"1 / 1"}}><Sonar layout={layout} view={view} activeSector={activeSector} onPick={pick} selected={selected} reduced={reduced} sweepOn={sweepOn}/></div>
+        {selected&&!editing&&<Detail blip={selected} allItems={items} onClose={closeDetail} onEdit={startEdit} onJumpToWp={jumpToWp} onJumpToExt={jumpToExt} onBack={goBack} canBack={navStack.length>0} cluster={cluster?{pos:cluster.idx+1,len:cluster.ids.length}:null} onCycle={cycleCluster} onShowSources={(name)=>{setSrcHighlight(name||null);setShowSources(true);}}/>}
+        {editing&&<EditForm draft={editing} setDraft={setEditing} onSave={saveEdit} onCancel={()=>setEditing(null)} onDelete={deleteItem} isNew={editIsNew}/>}
+        {showSources&&<SourcesPanel docs={sourceDocs} highlight={srcHighlight} onClose={()=>{setShowSources(false);setSrcHighlight(null);}}/>}
+      </main>
+    </div>
+    {toast&&<div role="status" style={{position:"fixed",bottom:22,left:"50%",transform:"translateX(-50%)",background:"var(--blue-800)",color:"#fff",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:600,zIndex:200,boxShadow:"0 8px 24px rgba(10,47,78,.3)"}}>{toast}</div>}
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
