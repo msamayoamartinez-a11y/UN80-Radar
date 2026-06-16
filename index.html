@@ -327,7 +327,7 @@ function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
   }
 
   return (
-    <svg viewBox="0 0 1000 1000" width="100%" height="100%" role="img"
+    <svg viewBox="-57 3 1114 994" width="100%" height="100%" role="img" preserveAspectRatio="xMidYMid meet"
       aria-label="Sonar of UN reform actions. Angle is the theme; distance from the centre is the degree of change, from incremental at the centre to dissolution at the rim.">
       <defs>
         <radialGradient id="screen" cx="50%" cy="50%" r="65%"><stop offset="0%" stopColor="#0E3A5C"/><stop offset="58%" stopColor="#082B47"/><stop offset="100%" stopColor="#05192B"/></radialGradient>
@@ -420,13 +420,11 @@ function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
           {sel&&[[-1,-1],[1,-1],[-1,1],[1,1]].map((c,i)=>{const d=b.size+10,L=6;return <path key={i} d={`M${c[0]*d} ${c[1]*(d-L)} L${c[0]*d} ${c[1]*d} L${c[0]*(d-L)} ${c[1]*d}`} fill="none" stroke="#fff" strokeWidth="2"/>;})}
         </g>;})}
 
-      {/* range labels (degree of change) — solid, high-contrast, above blips */}
-      {LEVELS.map((lv,i)=>{const r=HOLE+(MAXR-HOLE)*(i+0.5)/4;const p=polar(r,180);
-        const txt=`${lv.v} · ${lv.label}`;const w=txt.length*7.4+16;const c=["#5AA8E6","#46C8B4","#F5B45A","#F06E6E"][i];
+      {/* degree-of-change ring markers: small numerals up the top axis (full key is in the sidebar) */}
+      {LEVELS.map((lv,i)=>{const r=HOLE+(MAXR-HOLE)*(i+0.5)/4;const y=C-r;const c=["#7FB8E8","#5FD0C4","#F5C06A","#F47E7E"][i];
         return <g key={lv.v} style={{pointerEvents:"none"}}>
-          <rect x={p.x-w/2} y={p.y-11} width={w} height={22} rx={11} fill="#04263F" stroke={c} strokeWidth="1.1"/>
-          <circle cx={p.x-w/2+12} cy={p.y} r={3.4} fill={c}/>
-          <text x={p.x-w/2+22} y={p.y+0.5} dominantBaseline="middle" style={{fontFamily:"var(--font-body)",fontSize:13.5,fontWeight:600,fill:"#EAF4FB"}}>{txt}</text>
+          <circle cx={C} cy={y} r={9} fill="#04263F" stroke={c} strokeWidth="1.2" opacity=".92"/>
+          <text x={C} y={y+0.5} textAnchor="middle" dominantBaseline="middle" className="mono" style={{fontSize:11,fontWeight:700,fill:c}}>{lv.v}</text>
         </g>;})}
 
       <circle cx={C} cy={C} r={MAXR} fill="url(#vig)" style={{pointerEvents:"none"}}/>
@@ -498,7 +496,7 @@ function Detail({blip,allItems,onClose,onEdit,onJumpToWp,onJumpToExt,onBack,canB
     </div>
     <div style={{padding:"12px 18px",borderTop:"1px solid var(--border-subtle)",display:"flex",gap:8,flexDirection:"column"}}>
       {isUN&&<a href="https://un80actions.un.org/" target="_blank" rel="noopener noreferrer" style={{display:"block",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",textDecoration:"none"}}>View on un80actions.un.org →</a>}
-      {!isUN&&<button onClick={()=>onShowSources&&onShowSources(blip.by)} style={{display:"block",width:"100%",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",cursor:"pointer"}}>View all sources →</button>}
+      {!isUN&&<button onClick={()=>onShowSources&&onShowSources(blip.by)} style={{display:"block",width:"100%",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",cursor:"pointer"}}>View all external sources →</button>}
       <button onClick={()=>onEdit(blip)} style={{width:"100%",padding:"9px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontWeight:600,fontSize:13,color:"var(--blue-600)",cursor:"pointer"}}>Edit this item</button>
     </div>
   </div>);
@@ -551,6 +549,29 @@ function SourcesPanel({docs,onClose,highlight}){
   </div>);
 }
 
+/* ===== DATA PANEL ===== */
+function DataPanel({onExport,onImport,onTemplate,sweepOn,setSweepOn,onClose}){
+  const btn={padding:"10px",borderRadius:9,border:"1px solid var(--border)",background:"#fff",fontSize:13.5,fontWeight:600,color:"var(--blue-600)",cursor:"pointer"};
+  return (<div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(6,29,48,.45)",zIndex:60,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div onClick={e=>e.stopPropagation()} role="dialog" aria-label="Your data" style={{background:"var(--surface-card)",borderRadius:14,maxWidth:440,width:"100%",boxShadow:"0 18px 50px rgba(6,29,48,.4)"}}>
+      <div style={{padding:"16px 20px",borderBottom:"1px solid var(--border-subtle)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h2 style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:900,color:"var(--blue-800)"}}>Your data</h2>
+        <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",fontSize:22,color:"var(--text-2)",cursor:"pointer"}}>✕</button>
+      </div>
+      <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={onExport} style={{...btn,flex:1}}>Export JSON</button>
+          <button onClick={onImport} style={{...btn,flex:1}}>Import JSON</button>
+        </div>
+        <button onClick={onTemplate} style={{...btn,border:"1px dashed var(--blue-300)",background:"var(--blue-50)"}}>Download import template</button>
+        <p style={{fontSize:11,color:"var(--text-3)",lineHeight:1.5,margin:"2px 0"}}>The template is a JSON array with one example row and every field filled in. Valid codes — <b>theme</b>: {THEMES.map(t=>t.id).join(", ")}; <b>src</b>: {Object.keys(SOURCES).join(", ")}; <b>ws</b>: WS1, WS2, WS3, EXT; <b>lvl</b>: 1–4; <b>stance</b>: {STANCE_ORDER.filter(s=>s!=="official").join(", ")}; <b>wp</b>: 1–31 or null; <b>adj</b>: true/false.</p>
+        <label style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",borderRadius:9,border:"1px solid var(--border)",fontSize:13.5,color:"var(--text-1)",cursor:"pointer"}}><input type="checkbox" checked={sweepOn} onChange={e=>setSweepOn(e.target.checked)}/> Sonar sweep animation</label>
+        <p style={{fontSize:11,color:"var(--text-3)",lineHeight:1.4,fontStyle:"italic",marginTop:2}}>Changes live in this browser session only. Export to keep your work.</p>
+      </div>
+    </div>
+  </div>);
+}
+
 /* ===== APP ===== */
 function App(){
   const [items,setItems]=useState(()=>[...UN80,...EXTERNAL]);
@@ -564,6 +585,7 @@ function App(){
   const [cluster,setCluster]=useState(null);
   const [showSources,setShowSources]=useState(false);
   const [srcHighlight,setSrcHighlight]=useState(null);
+  const [showData,setShowData]=useState(false);
   const [editing,setEditing]=useState(null);
   const [editIsNew,setEditIsNew]=useState(false);
   const [sweepOn,setSweepOn]=useState(true);
@@ -608,74 +630,97 @@ function App(){
   function saveEdit(){const d={...editing,name:editing.name.trim()};setItems(p=>p.some(x=>x.id===d.id)?p.map(x=>x.id===d.id?{...x,...d}:x):[...p,d]);setEditing(null);flash(editIsNew?"Proposal added":"Saved");}
   function deleteItem(){setItems(p=>p.filter(x=>x.id!==editing.id));setEditing(null);closeDetail();flash("Deleted");}
   const toggle=(s,setS,k)=>setS(p=>{const n=new Set(p);n.has(k)?n.delete(k):n.add(k);return n;});
+  const solo=(s,setS,keys,k)=>setS((s.size===1&&s.has(k))?new Set(keys):new Set([k]));
+  const allSrc=Object.keys(SOURCES), allWs=WORKSTREAMS.map(w=>w.id), allStance=STANCE_ORDER;
   function exportJSON(){const b=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="reform-radar-data.json";a.click();URL.revokeObjectURL(u);flash("Data exported");}
   function downloadTemplate(){
     const example=[{id:"EXAMPLE-1",name:"Short title of the proposal",theme:"coord",lvl:2,ws:"WS3",src:"tt",stance:"New",by:"Institution — Author",wp:10,adj:true,desc:"One or two sentences on the idea and how it relates to a UN80 work package. Delete this row and add your own."}];
     const b=new Blob([JSON.stringify(example,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="reform-radar-template.json";a.click();URL.revokeObjectURL(u);flash("Template downloaded");
   }
   function importJSON(e){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){setItems(d);closeDetail();flash("Data imported");}else flash("File not recognised");}catch{flash("Could not read file");}};r.readAsText(f);e.target.value="";}
-  const railW=isMobile?"100%":300;
+  const denseCard={...card,padding:13};
+  const sub={fontSize:12,fontWeight:700,color:"var(--text-1)",marginBottom:7};
+  const navBtn={display:"inline-flex",alignItems:"center",gap:7,padding:"9px 13px",borderRadius:10,border:"1px solid var(--blue-300)",background:"var(--blue-50)",color:"var(--blue-700)",fontWeight:700,fontSize:13,cursor:"pointer",whiteSpace:"nowrap"};
+  const pill=(on)=>({padding:"5px 11px",borderRadius:999,fontSize:12.5,fontWeight:on?700:500,border:on?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:on?"var(--blue-50)":"#fff",color:"var(--text-1)",cursor:"pointer"});
+  const allOn=(s,keys)=>s.size===keys.length;
 
-  return (<div style={{minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-    <header style={{padding:isMobile?"16px 18px":"20px 28px",borderBottom:"1px solid var(--border)",background:"var(--surface-card)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16,flexWrap:"wrap"}}>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}><span className="mono" style={{fontSize:11,letterSpacing:".18em",color:"var(--blue-500)",fontWeight:700}}>UN80 INITIATIVE</span><span style={{fontSize:11,color:"var(--text-3)"}}>tracking reform actions & proposals</span></div>
-          <h1 style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:isMobile?"26px":"34px",color:"var(--blue-800)",lineHeight:1.1,marginTop:6}}>Reform Proposals Radar</h1>
+  const pageWrap=isMobile?{minHeight:"100vh",background:"var(--surface-page)"}:{height:"100vh",overflow:"hidden",background:"var(--surface-page)",display:"flex",justifyContent:"center"};
+  const appShell=isMobile?{display:"flex",flexDirection:"column",minHeight:"100vh"}:{width:"100%",maxWidth:1760,height:"100%",display:"flex",flexDirection:"column",overflow:"hidden",borderLeft:"1px solid var(--border)",borderRight:"1px solid var(--border)"};
+  const body=isMobile?{flex:1,display:"flex",flexDirection:"column"}:{flex:1,minHeight:0,display:"flex",flexDirection:"row"};
+  const asideStyle=isMobile
+    ?{width:"100%",padding:14,display:"flex",flexDirection:"column",gap:12,borderBottom:"1px solid var(--border)",background:"var(--surface-page)"}
+    :{width:340,flexShrink:0,height:"100%",overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12,borderRight:"1px solid var(--border)",background:"var(--surface-page)"};
+  const mainStyle=isMobile
+    ?{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",padding:10,background:"radial-gradient(circle at 50% 46%, #0a2236 0%, #05101b 100%)",minHeight:420}
+    :{flex:1,minWidth:0,position:"relative",display:"flex",alignItems:"center",justifyContent:"center",padding:6,background:"radial-gradient(circle at 50% 46%, #0a2236 0%, #05101b 100%)",overflow:"hidden"};
+  const radarBox=isMobile?{width:"100%",maxWidth:620,aspectRatio:"557 / 497"}:{height:"100%",aspectRatio:"557 / 497",maxWidth:"100%"};
+
+  return (<div style={pageWrap}><div style={appShell}>
+    <header style={{padding:isMobile?"12px 16px":"11px 24px",borderBottom:"1px solid var(--border)",background:"var(--surface-card)",flexShrink:0}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+        <div style={{minWidth:0}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}}><span className="mono" style={{fontSize:10.5,letterSpacing:".18em",color:"var(--blue-500)",fontWeight:700}}>UN80 INITIATIVE</span><span style={{fontSize:10.5,color:"var(--text-3)"}}>tracking reform actions & proposals</span></div>
+          <h1 style={{fontFamily:"var(--font-display)",fontWeight:900,fontSize:isMobile?"24px":"28px",color:"var(--blue-800)",lineHeight:1.1,marginTop:3}}>Reform Proposals Radar</h1>
         </div>
-        <button onClick={()=>{setSrcHighlight(null);setShowSources(true);}} style={{flexShrink:0,display:"inline-flex",alignItems:"center",gap:7,padding:"9px 14px",borderRadius:10,border:"1px solid var(--blue-300)",background:"var(--blue-50)",color:"var(--blue-700)",fontWeight:700,fontSize:13,cursor:"pointer"}}>View all sources <span className="mono" style={{fontSize:12,opacity:.8}}>({sourceDocs.length})</span></button>
+        <div style={{display:"flex",gap:8,flexShrink:0,flexWrap:"wrap"}}>
+          <button onClick={startAdd} style={{...navBtn,border:"none",background:"var(--blue-500)",color:"#fff"}}>+ Add a proposal</button>
+          <button onClick={()=>setShowData(true)} style={navBtn}>Your data</button>
+          <button onClick={()=>{setSrcHighlight(null);setShowSources(true);}} style={navBtn}>View all sources <span className="mono" style={{fontSize:12,opacity:.8}}>({sourceDocs.length})</span></button>
+        </div>
       </div>
-      <div style={{display:"flex",gap:isMobile?14:26,marginTop:12,flexWrap:"wrap"}}>{[["UN80 actions",counts.un],["External proposals",counts.nw],["Showing",view==="packages"?"31 pkgs + "+counts.nw:"87 actions + "+counts.nw]].map(([k,v])=><div key={k}><div style={lbl}>{k}</div><div className="mono" style={{fontSize:20,fontWeight:600,color:"var(--blue-700)"}}>{v}</div></div>)}</div>
+      <div style={{marginTop:8,display:"flex",gap:isMobile?14:22,flexWrap:"wrap",fontSize:12.5,color:"var(--text-2)"}}>
+        <span><b className="mono" style={{color:"var(--blue-700)",fontSize:13.5}}>{counts.un}</b> UN80 actions</span>
+        <span><b className="mono" style={{color:"var(--blue-700)",fontSize:13.5}}>{counts.nw}</b> external proposals</span>
+        <span>Showing <b style={{color:"var(--blue-700)"}}>{view==="packages"?"31 pkgs":"87 actions"} + {counts.nw}</b></span>
+      </div>
     </header>
 
-    <div style={{flex:1,display:"flex",flexDirection:isMobile?"column":"row",position:"relative"}}>
-      <aside style={{width:railW,flexShrink:0,padding:16,display:"flex",flexDirection:"column",gap:14,borderRight:isMobile?"none":"1px solid var(--border)",borderBottom:isMobile?"1px solid var(--border)":"none",background:"var(--surface-page)",overflowY:"auto"}}>
-        <button onClick={startAdd} style={{padding:"11px",borderRadius:10,border:"none",background:"var(--blue-500)",color:"#fff",fontWeight:700,fontSize:14}}>+ Add a proposal</button>
-
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Show</div>
-          <div style={{display:"flex",gap:6}}>{[["packages","Work packages"],["actions","Actions"]].map(([g,l])=><button key={g} onClick={()=>{setView(g);}} style={{flex:1,padding:"8px",borderRadius:8,fontSize:13,fontWeight:view===g?700:500,border:view===g?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:view===g?"var(--blue-50)":"#fff",color:"var(--text-1)"}}>{l}</button>)}</div>
-          <p style={{fontSize:11.5,color:"var(--text-3)",marginTop:9,lineHeight:1.4}}>{view==="packages"?"One contact per work package, sized by how many actions it holds.":"Every action, clustered by work package within its theme."}</p>
+    <div style={body}>
+      <aside style={asideStyle}>
+        <div style={denseCard}><div style={{...lbl,marginBottom:8}}>View</div>
+          <div style={{display:"flex",gap:6}}>{[["packages","Work packages"],["actions","Actions"]].map(([g,l])=><button key={g} onClick={()=>setView(g)} style={{flex:1,padding:"8px",borderRadius:8,fontSize:13,fontWeight:view===g?700:500,border:view===g?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:view===g?"var(--blue-50)":"#fff",color:"var(--text-1)",cursor:"pointer"}}>{l}</button>)}</div>
+          <div style={{...lbl,margin:"11px 0 7px"}}>Workstream</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <button onClick={()=>setWsFilter(new Set(allWs))} style={pill(allOn(wsFilter,allWs))}>All</button>
+            {WORKSTREAMS.map(w=><button key={w.id} onClick={()=>solo(wsFilter,setWsFilter,allWs,w.id)} aria-pressed={wsFilter.has(w.id)} style={pill(wsFilter.has(w.id)&&!allOn(wsFilter,allWs))}>{w.short}</button>)}
+          </div>
         </div>
 
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Focus a sector</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}><button onClick={()=>setActiveSector(null)} style={{padding:"6px 11px",borderRadius:999,fontSize:13,fontWeight:!activeSector?700:500,border:!activeSector?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:!activeSector?"var(--blue-50)":"#fff",color:"var(--text-1)"}}>All</button>
+        <div style={denseCard}><div style={{...lbl,marginBottom:8}}>Sector · the angle</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}><button onClick={()=>setActiveSector(null)} style={pill(!activeSector)}>All</button>
           {THEMES.map(t=><Chip key={t.id} active={activeSector===t.id} color={t.color} onClick={()=>setActiveSector(activeSector===t.id?null:t.id)}>{t.short}</Chip>)}</div>
         </div>
 
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Source · the ring</div>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>{Object.entries(SOURCES).map(([k,s])=>{const on=srcFilter.has(k);return <button key={k} onClick={()=>toggle(srcFilter,setSrcFilter,k)} aria-pressed={on} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 8px",borderRadius:8,border:"1px solid "+(on?"var(--border)":"transparent"),background:on?"#fff":"transparent",opacity:on?1:0.4,fontSize:13,color:"var(--text-1)",textAlign:"left"}}><Sw src={k}/>{s.label}</button>;})}</div>
-          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>The ring around a contact shows who proposed it. UN80 actions have no ring. The fill colour shows stance (below).</p>
+        <div style={denseCard}><div style={{...lbl,marginBottom:8}}>Stance · the fill colour</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <button onClick={()=>setStanceFilter(new Set(allStance))} style={pill(allOn(stanceFilter,allStance))}>All</button>
+            {STANCE_ORDER.map(s=>{const on=stanceFilter.has(s)&&!allOn(stanceFilter,allStance);return <button key={s} onClick={()=>solo(stanceFilter,setStanceFilter,allStance,s)} aria-pressed={stanceFilter.has(s)} style={{display:"inline-flex",alignItems:"center",gap:7,padding:"5px 10px",borderRadius:999,fontSize:12.5,fontWeight:on?700:500,border:on?`1.5px solid ${STANCE[s].color}`:"1px solid var(--border)",background:on?"var(--blue-50)":"#fff",color:"var(--text-1)",cursor:"pointer"}}><span style={{width:11,height:11,borderRadius:"50%",background:STANCE[s].color,border:"1px solid rgba(0,0,0,.12)"}}/>{s==="official"?"Official":s}</button>;})}
+          </div>
+          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>Click a colour to spotlight only that stance; click it again or “All” to reset.</p>
         </div>
 
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Filter by workstream</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{WORKSTREAMS.map(w=>{const on=wsFilter.has(w.id);return <button key={w.id} onClick={()=>toggle(wsFilter,setWsFilter,w.id)} aria-pressed={on} style={{padding:"5px 10px",borderRadius:999,fontSize:12.5,fontWeight:on?600:500,border:"1px solid "+(on?"var(--border)":"transparent"),background:on?"#fff":"transparent",opacity:on?1:0.4,color:"var(--text-1)"}}>{w.short}</button>;})}</div>
-        </div>
-
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Stance · the fill colour</div>
-          <div style={{display:"flex",flexDirection:"column",gap:5}}>{STANCE_ORDER.map(s=>{const on=stanceFilter.has(s);return <button key={s} onClick={()=>toggle(stanceFilter,setStanceFilter,s)} aria-pressed={on} style={{display:"flex",alignItems:"center",gap:9,padding:"5px 8px",borderRadius:8,border:"1px solid "+(on?"var(--border)":"transparent"),background:on?"#fff":"transparent",opacity:on?1:0.4,fontSize:12.5,color:"var(--text-1)",textAlign:"left"}}><span style={{width:13,height:13,borderRadius:"50%",background:STANCE[s].color,flexShrink:0,border:"1px solid rgba(0,0,0,.15)"}}/>{STANCE[s].label}</button>;})}</div>
-          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>A contact's fill colour shows where it stands on a UN80 action. Select one to see the line to the package it targets.</p>
-        </div>
-
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Distance from centre · degree of change</div>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>{LEVELS.map((l,i)=><div key={l.v} style={{display:"flex",gap:9,alignItems:"baseline"}}><span style={{width:10,height:10,borderRadius:2,marginTop:3,background:["#5AA8E6","#46C8B4","#F5B45A","#F06E6E"][i],flexShrink:0}}/><div><div style={{fontSize:13,fontWeight:600}}>{l.label}</div><div style={{fontSize:11.5,color:"var(--text-2)",lineHeight:1.35}}>{l.desc}</div></div></div>)}</div>
-          <p style={{fontSize:11.5,color:"var(--text-3)",marginTop:10,lineHeight:1.4}}>Centre = keep the status quo. The rim = take it apart.</p>
-        </div>
-
-        <div style={card}><div style={{...lbl,marginBottom:9}}>Your data</div>
-          <div style={{display:"flex",gap:6}}><button onClick={exportJSON} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontSize:12.5,fontWeight:600,color:"var(--blue-600)"}}>Export</button><button onClick={()=>fileRef.current&&fileRef.current.click()} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontSize:12.5,fontWeight:600,color:"var(--blue-600)"}}>Import</button><input ref={fileRef} type="file" accept="application/json" onChange={importJSON} style={{display:"none"}}/></div>
-          <button onClick={downloadTemplate} style={{width:"100%",marginTop:6,padding:"8px",borderRadius:8,border:"1px dashed var(--blue-300)",background:"var(--blue-50)",fontSize:12.5,fontWeight:600,color:"var(--blue-600)"}}>Download import template</button>
-          <p style={{fontSize:10.5,color:"var(--text-3)",marginTop:7,lineHeight:1.5}}>Template is a JSON array with one example row and every field filled in. Valid codes — <b>theme</b>: {THEMES.map(t=>t.id).join(", ")}; <b>src</b>: {Object.keys(SOURCES).join(", ")}; <b>ws</b>: WS1, WS2, WS3, EXT; <b>lvl</b>: 1–4; <b>stance</b>: {STANCE_ORDER.filter(s=>s!=="official").join(", ")}; <b>wp</b>: 1–31 or null; <b>adj</b>: true/false.</p>
-          <label style={{display:"flex",alignItems:"center",gap:8,marginTop:10,fontSize:12.5,color:"var(--text-2)",cursor:"pointer"}}><input type="checkbox" checked={sweepOn} onChange={e=>setSweepOn(e.target.checked)}/> Sonar sweep</label>
-          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4,fontStyle:"italic"}}>Changes live in this browser session only. Export to keep your work.</p>
+        <div style={denseCard}><div style={{...lbl,marginBottom:9}}>How to read it</div>
+          <div style={sub}>Distance from centre · degree of change</div>
+          <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:11}}>{LEVELS.map((l,i)=><div key={l.v} style={{display:"flex",gap:9,alignItems:"center",fontSize:12.5,color:"var(--text-1)"}}><span className="mono" style={{width:16,height:16,borderRadius:"50%",display:"grid",placeItems:"center",fontSize:10,fontWeight:700,color:"#fff",background:["#7FB8E8","#5FD0C4","#F5C06A","#F47E7E"][i],flexShrink:0}}>{l.v}</span>{l.label}</div>)}</div>
+          <p style={{fontSize:11,color:"var(--text-3)",marginTop:-4,marginBottom:11,lineHeight:1.4}}>Centre = keep the status quo; the rim = take it apart.</p>
+          <div style={sub}>Source · the ring</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <button onClick={()=>setSrcFilter(new Set(allSrc))} style={pill(allOn(srcFilter,allSrc))}>All</button>
+            {Object.entries(SOURCES).map(([k,s])=>{const on=srcFilter.has(k)&&!allOn(srcFilter,allSrc);return <button key={k} onClick={()=>solo(srcFilter,setSrcFilter,allSrc,k)} aria-pressed={srcFilter.has(k)} style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 10px",borderRadius:999,fontSize:12.5,fontWeight:on?700:500,border:on?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:on?"var(--blue-50)":"#fff",color:"var(--text-1)",cursor:"pointer"}}><Sw src={k}/>{k==="un80"?"UN80":k==="ms"?"Member State":k==="cso"?"Civil society":"Think tank"}</button>;})}
+          </div>
+          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>The ring shows who proposed it (UN80 actions have none). Click to spotlight one source.</p>
         </div>
       </aside>
 
-      <main style={{flex:1,position:"relative",display:"flex",alignItems:"center",justifyContent:"center",padding:isMobile?16:28,background:"radial-gradient(circle at 50% 40%, #0a2236 0%, #05101b 100%)",minHeight:isMobile?460:0}}>
-        <div style={{width:"100%",maxWidth:700,aspectRatio:"1 / 1"}}><Sonar layout={layout} view={view} activeSector={activeSector} onPick={pick} selected={selected} reduced={reduced} sweepOn={sweepOn}/></div>
+      <main style={mainStyle}>
+        <div style={radarBox}><Sonar layout={layout} view={view} activeSector={activeSector} onPick={pick} selected={selected} reduced={reduced} sweepOn={sweepOn}/></div>
         {selected&&!editing&&<Detail blip={selected} allItems={items} onClose={closeDetail} onEdit={startEdit} onJumpToWp={jumpToWp} onJumpToExt={jumpToExt} onBack={goBack} canBack={navStack.length>0} cluster={cluster?{pos:cluster.idx+1,len:cluster.ids.length}:null} onCycle={cycleCluster} onShowSources={(name)=>{setSrcHighlight(name||null);setShowSources(true);}}/>}
         {editing&&<EditForm draft={editing} setDraft={setEditing} onSave={saveEdit} onCancel={()=>setEditing(null)} onDelete={deleteItem} isNew={editIsNew}/>}
         {showSources&&<SourcesPanel docs={sourceDocs} highlight={srcHighlight} onClose={()=>{setShowSources(false);setSrcHighlight(null);}}/>}
+        {showData&&<DataPanel onExport={exportJSON} onImport={()=>fileRef.current&&fileRef.current.click()} onTemplate={downloadTemplate} sweepOn={sweepOn} setSweepOn={setSweepOn} onClose={()=>setShowData(false)}/>}
       </main>
+    </div>
+    <input ref={fileRef} type="file" accept="application/json" onChange={importJSON} style={{display:"none"}}/>
     </div>
     {toast&&<div role="status" style={{position:"fixed",bottom:22,left:"50%",transform:"translateX(-50%)",background:"var(--blue-800)",color:"#fff",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:600,zIndex:200,boxShadow:"0 8px 24px rgba(10,47,78,.3)"}}>{toast}</div>}
   </div>);
