@@ -145,7 +145,7 @@ const RAW=[
 const UN80=RAW.map(r=>({id:"a"+r[0],n:r[0],wp:r[1],ws:r[2],lvl:r[3],name:r[4],theme:WP[r[1]][2],wpName:WP[r[1]][0],leads:WP[r[1]][1],src:"un80",stance:"official"}));
 const IPI="IPI Global Observatory — Lynn Hastings", CICP="CIC, NYU — Camelli & Patz", CICC="CIC, NYU — Thibault Camelli",
       RW="ReformWorks — Katja Hemmerich", SIPA="Columbia SIPA (IOUNS) — Ashutosh Upadhyay", GGI="Global Governance Institute — Ronny Patz",
-      IPPF="IPPF", FOS="Fòs Feminista", EC="Eugene Chen — Blue Helmets, Red Tape";
+      IPPF="IPPF", FOS="Fòs Feminista", EC="Eugene Chen — Blue Helmets, Red Tape", GUNG="Cepei — Governing the Ungovernable";
 const SOURCE_URLS={
   [IPI]:"https://theglobalobservatory.org/2026/06/advancing-un-reform-what-member-states-can-do-now/",
   [CICP]:"https://cic.nyu.edu/resources/how-to-end-the-united-nations-current-financial-crisis-and-prevent-future-ones/",
@@ -156,6 +156,7 @@ const SOURCE_URLS={
   [RW]:"https://www.reformworks.org/post/un80-stagnation-an-opportunity-for-bureaucratic-entrepreneurs",
   [SIPA]:"https://multilateralism.sipa.columbia.edu/news/united-nations-currency-would-reduce-donor-dependency-and-improve-global-financial-stability",
   [EC]:"https://casquebleu.substack.com/",
+  [GUNG]:"https://cepei.org/",
 };
 /* [id, name, theme, lvl, ws, src, stance, by, wp, adj, desc] */
 const EXT_RAW=[
@@ -216,6 +217,24 @@ const EXT_RAW=[
  ["E7","Integrated overhaul of contingent reimbursement","peace",3,"WS1","tt","New",EC,1,true,"Use the rare 2026 conjunction of the contingent-owned-equipment and personnel reimbursement review cycles to launch a GA-led overhaul into one integrated framework — modelled on the 2012 senior advisory group — meeting four objectives: subsidise troop/police contributors, incentivise mandate implementation, enable specialised capabilities, and stay affordable. Usage-based reimbursement alone is a quick fix that could worsen the UN's largest source of greenhouse-gas emissions."],
  ["E8","Reassess the stabilisation / 'robust turn'","peace",1,"WS3","tt","New",EC,1,true,"Make an honest reassessment of the stabilisation / 'robust turn' central to the peace-operations review: peacekeeper casualties spiked after MONUSCO's Force Intervention Brigade (res 2098, 2013), and safety can't be fixed by training, equipment and prosecutions alone while missions become parties to conflict and forfeit impartiality."],
  ["E9","Weigh IHL consequences when mandating","peace",1,"EXT","tt","New",EC,1,true,"The Security Council should weigh international-humanitarian-law consequences when mandating robust or stabilisation missions, or authorising UN support to non-UN forces (e.g. under res 2719): such roles can strip peacekeepers of protected non-combatant status and make them legitimate targets — a consequence poorly understood when robust mandates are adopted."],
+ ["G1","Power Audit transparency dashboard","enable",1,"WS1","tt","New",GUNG,null,false,"Launch a public 'Power Audit' dashboard the Secretariat can publish without member-state approval: funding flows (core vs earmarked, by donor and agency), appointment patterns (nationality, gender, background of D1+ staff), and voting alignments. Quarterly, with interactive filters. Makes invisible power visible."],
+ ["G2","Funding Compact compliance report","enable",1,"WS1","tt","New",GUNG,null,false,"Publish an annual Funding Compact compliance report naming which countries increased core funding, which kept earmarking and which cut flexibility — turning voluntary pledges into reputational stakes. Core/pooled funding sits at 13% against a 30% target."],
+ ["G3","Virtual access to all informal consultations","coord",1,"WS1","tt","New",GUNG,null,false,"Direct that every informal consultation negotiating draft text offer virtual participation to any interested member state — links and advance notice, no expansion of rooms. Narrows the capacity gap for smaller missions, who can't staff the roughly 80% of text settled informally."],
+ ["G4","Real-time earmarking disclosure","enable",1,"WS1","tt","New",GUNG,null,false,"Require real-time disclosure of earmarked funding: any contribution over $5m disclosed (donor, amount, purpose, duration, conditionalities) within 30 days, plus quarterly reports — instead of piecemeal annual reporting after decisions are made."],
+ ["G5","Inclusion Scorecard for civil-society access","rights",1,"WS1","tt","New",GUNG,null,false,"Create an Inclusion Scorecard ranking UN forums (boards, ECOSOC segments, GA committees) on civil-society access: advance notice, speaking time, access to informals and feedback. Name forums that score poorly."],
+ ["G6","Annual State of UNDS Governance address","coord",1,"WS1","tt","New",GUNG,null,false,"Institutionalise an annual 'State of UNDS Governance' address to ECOSOC focused on power dynamics — whether the triple disconnect between authority, resources and affected populations is narrowing, which reforms work, who leads and lags."],
+ ["G7","Board consultation above 65% earmarking","enable",1,"WS1","tt","New",GUNG,null,false,"Issue a system-wide instruction that no entity accept earmarked contributions above 65% of its funding without explicit executive-board consultation. Doesn't ban earmarking; makes heavy earmarking a board decision rather than management discretion."],
+ ["G8","Tie funding quality to governance access","enable",2,"EXT","tt","New",GUNG,null,false,"Enforce the Funding Compact by linking funding quality to governance access: compliant donors gain penholder priority, ECOSOC speaking slots and recognition in SG reports; heavy earmarkers see reduced drafting and coordination influence. Aim to move core/pooled funding from 13% toward 25-30% over five years."],
+ ["G9","Commission the evidence base on earmarking","enable",1,"WS1","tt","New",GUNG,null,false,"Commission independent evidence to make the case for funding reform: the real cost of earmarking (transaction costs, duplicated reporting, fragmentation — estimated at 20-30% of resources) and a cost-benefit analysis of UNDS delivery against bilateral, foundation, private-sector and South-South alternatives."],
+ ["G10","Pilot ECOSOC budget authority","coord",2,"EXT","tt","New",GUNG,null,false,"Pilot giving ECOSOC budget authority over 10-15% of pooled (non-earmarked) funds, so the UN's coordinating body has real resource leverage rather than advisory authority. If it improves coordination, scale it."],
+ ["G11","Shift donors to core + diversity index","enable",1,"EXT","tt","New",GUNG,null,false,"Quietly negotiate the top five donors to shift 5% of earmarked funding to core each year over five years (framed as concentrating their board influence), and publish a Funding Diversity Index ranking entities by donor concentration with targets to cut single-donor dependence."],
+ ["G12","Rebalance penholding to the Global South","coord",2,"EXT","tt","New",GUNG,null,false,"Rebalance who holds the pen on development resolutions toward the Global South: rotate 50% of penholder positions to programme countries (which host 86% of operations), pair Northern and Southern co-penholders as standard, and stand up a technical drafting-support unit in DESA/EOSG."],
+ ["G13","Resource the G77 + bridge-builders","coord",2,"EXT","tt","New",GUNG,null,false,"Give Southern coalitions the infrastructure donors already have: a standing G77 and China secretariat and coordination platform (the G24-at-the-IMF model), plus a Bridge-Builder States initiative that convenes and credits middle powers who broker across blocs."],
+ ["G14","Coordination with teeth: DSG + RCs","coord",2,"WS3","tt","New",GUNG,null,false,"Give coordination teeth: hand the Deputy Secretary-General budget control over pooled coordination funds ($50-100m/yr) and authority to mediate inter-agency disputes, and delegate Resident Coordinators real authority to resolve programming conflicts — not just convene."],
+ ["G15","Mandate review pilot + sunset clauses","mandate",2,"WS3","tt","New",GUNG,null,false,"Start a mandate review pilot inside EOSG structures (special envoys, thematic advocates) to document duplication and what should sunset, and make 10-year sunset clauses standard so the burden of proof shifts to continuation. Build the principle into UN80."],
+ ["G16","Propose a UN Development Charter","coord",2,"WS3","tt","New",GUNG,null,false,"Propose a voluntary UN Development Charter: entities commit to joint country-level programming, shared back-office functions, RC coordination authority and coordination reporting, in exchange for donors providing at least 25% core funding to signatories — incentives, not hierarchy."],
+ ["G17","CSO standards + Global Participation Fund","rights",1,"EXT","tt","New",GUNG,null,false,"Set binding civil-society engagement standards by ECOSOC resolution (14-day notice, guaranteed speaking time, feedback, observer access to informals) and create a Global Participation Fund covering travel, accommodation and salary replacement so Southern CSOs from LDCs and SIDS can attend."],
+ ["G18","Foundation accountability standards","enable",1,"EXT","tt","New",GUNG,null,false,"Hold foundations to account in proportion to their influence: FENSA-style conflict-of-interest disclosure, a cap so no entity draws more than 15% of its budget from one foundation, advice-not-vote limits, and public disclosure for any funder giving over $10m a year."],
 ];
 const EXTERNAL=EXT_RAW.map(r=>({id:r[0],name:r[1],theme:r[2],lvl:r[3],ws:r[4],src:r[5],stance:r[6],by:r[7],wp:r[8],adj:r[9],desc:r[10]}));
 
@@ -301,9 +320,47 @@ function Dot({src,s}){const z=s||7;const sc=SOURCES[src]||SOURCES.un80;
 
 /* ===== SONAR ===== */
 function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
-  const sweepRef=useRef(null),glow=useRef({}),aRef=useRef(-90);
+  const sweepRef=useRef(null),glow=useRef({}),aRef=useRef(-90),svgRef=useRef(null);
   const [hover,setHover]=useState(null);
   const {blips,dividers,wpLabels}=layout;
+  // pan + zoom (viewBox driven)
+  const BV={x:-57,y:3,w:1114,h:994};const ASP=BV.h/BV.w;const MINW=BV.w/4.5;
+  const [vb,setVb]=useState(BV);const vbRef=useRef(vb);useEffect(()=>{vbRef.current=vb;},[vb]);
+  const drag=useRef(null);
+  const cl=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+  function zoomAt(px,py,f){const v=vbRef.current;let nw=cl(v.w*f,MINW,BV.w),nh=nw*ASP;
+    const rx=(px-v.x)/v.w,ry=(py-v.y)/v.h;let nx=cl(px-rx*nw,BV.x,BV.x+BV.w-nw),ny=cl(py-ry*nh,BV.y,BV.y+BV.h-nh);
+    setVb({x:nx,y:ny,w:nw,h:nh});}
+  const zoomBtn=f=>{const v=vbRef.current;zoomAt(v.x+v.w/2,v.y+v.h/2,f);};
+  const resetZoom=()=>setVb(BV);
+  useEffect(()=>{const el=svgRef.current;if(!el)return;
+    const onWheel=e=>{e.preventDefault();const v=vbRef.current,r=el.getBoundingClientRect();
+      const px=v.x+((e.clientX-r.left)/r.width)*v.w,py=v.y+((e.clientY-r.top)/r.height)*v.h;
+      zoomAt(px,py,e.deltaY<0?1/1.18:1.18);};
+    el.addEventListener("wheel",onWheel,{passive:false});return ()=>el.removeEventListener("wheel",onWheel);
+  },[]);
+  // zoom into a sector when one is focused; reset when cleared
+  useEffect(()=>{
+    if(!activeSector){setVb(BV);return;}
+    const i=THEMES.findIndex(t=>t.id===activeSector);if(i<0){setVb(BV);return;}
+    const a0=-90+i*SECT,a1=-90+(i+1)*SECT,RR=MAXR+46;
+    const pts=[[C,C]];for(let a=a0;a<=a1+0.01;a+=SECT/16){const p=polar(RR,a);pts.push([p.x,p.y]);}
+    let minx=Math.min(...pts.map(p=>p[0])),maxx=Math.max(...pts.map(p=>p[0])),miny=Math.min(...pts.map(p=>p[1])),maxy=Math.max(...pts.map(p=>p[1]));
+    const pad=34;minx-=pad;maxx+=pad;miny-=pad;maxy+=pad;
+    let w=maxx-minx,h=maxy-miny;const want=BV.w/BV.h;
+    if(w/h<want){const nw=h*want;minx-=(nw-w)/2;w=nw;}else{const nh=w/want;miny-=(nh-h)/2;h=nh;}
+    w=Math.min(w,BV.w);h=Math.min(h,BV.h);
+    setVb({x:cl(minx,BV.x,BV.x+BV.w-w),y:cl(miny,BV.y,BV.y+BV.h-h),w,h});
+  },[activeSector]);
+  function onDown(e){const v=vbRef.current;if(v.w>=BV.w)return;const r=svgRef.current.getBoundingClientRect();
+    drag.current={sx:e.clientX,sy:e.clientY,vx:v.x,vy:v.y,w:v.w,h:v.h,rw:r.width,rh:r.height,moved:false,pid:e.pointerId};}
+  function onMove(e){const d=drag.current;if(!d)return;
+    if(!d.moved){if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<4)return;d.moved=true;try{svgRef.current.setPointerCapture(d.pid);}catch(_){}}
+    e.preventDefault();
+    const dx=(e.clientX-d.sx)/d.rw*d.w,dy=(e.clientY-d.sy)/d.rh*d.h;
+    setVb({x:cl(d.vx-dx,BV.x,BV.x+BV.w-d.w),y:cl(d.vy-dy,BV.y,BV.y+BV.h-d.h),w:d.w,h:d.h});}
+  function onUp(){const d=drag.current;if(d&&d.moved){try{svgRef.current.releasePointerCapture(d.pid);}catch(_){}}drag.current=null;}
+  const zoomed=vb.w<BV.w-1;
   useEffect(()=>{
     if(reduced||!sweepOn){Object.values(glow.current).forEach(el=>{if(el)el.setAttribute("opacity","0.26");});return;}
     let raf,last=performance.now();
@@ -326,8 +383,12 @@ function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
     if(src&&tgt)connector={src,tgt,color:(STANCE[selected.stance]||STANCE.New).color,adj:selected.adj};
   }
 
+  const zbtn={width:34,height:34,borderRadius:9,border:"1px solid rgba(130,165,190,.3)",background:"rgba(8,28,46,.82)",color:"#dDEAF5",fontSize:17,fontWeight:700,cursor:"pointer",display:"grid",placeItems:"center",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",lineHeight:1};
   return (
-    <svg viewBox="-57 3 1114 994" width="100%" height="100%" role="img" preserveAspectRatio="xMidYMid meet"
+    <div style={{position:"relative",width:"100%",height:"100%"}}>
+    <svg ref={svgRef} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} width="100%" height="100%" role="img" preserveAspectRatio="xMidYMid meet"
+      onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}
+      style={{display:"block",cursor:zoomed?(drag.current&&drag.current.moved?"grabbing":"grab"):"default",touchAction:"none",userSelect:"none",WebkitUserSelect:"none"}}
       aria-label="Sonar of UN reform actions. Angle is the theme; distance from the centre is the degree of change, from incremental at the centre to dissolution at the rim.">
       <defs>
         <radialGradient id="screen" cx="50%" cy="50%" r="65%"><stop offset="0%" stopColor="#0E3A5C"/><stop offset="58%" stopColor="#082B47"/><stop offset="100%" stopColor="#05192B"/></radialGradient>
@@ -429,6 +490,12 @@ function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
 
       <circle cx={C} cy={C} r={MAXR} fill="url(#vig)" style={{pointerEvents:"none"}}/>
     </svg>
+    <div style={{position:"absolute",left:30,bottom:28,display:"flex",flexDirection:"column",gap:6,zIndex:25}}>
+      <button onClick={()=>zoomBtn(1/1.35)} aria-label="Zoom in" title="Zoom in" style={zbtn}>+</button>
+      <button onClick={()=>zoomBtn(1.35)} aria-label="Zoom out" title="Zoom out" style={zbtn}>−</button>
+      <button onClick={resetZoom} aria-label="Reset zoom" title="Reset zoom" disabled={!zoomed} style={{...zbtn,fontSize:13,opacity:zoomed?1:.4,cursor:zoomed?"pointer":"default"}}>⤢</button>
+    </div>
+    </div>
   );
 }
 
@@ -436,6 +503,28 @@ function Sonar({layout,view,activeSector,onPick,selected,reduced,sweepOn}){
 const lbl={fontSize:11,fontWeight:600,letterSpacing:".07em",textTransform:"uppercase",color:"var(--text-2)"};
 const card={background:"var(--surface-card)",border:"1px solid var(--border)",borderRadius:12,padding:16};
 function Sw({src}){return <svg width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true"><Dot src={src} s={6}/></svg>;}
+
+function ReadKey({dark,srcFilter,onSolo,onAll,allOn}){
+  const tx=dark?"#E6F1FA":"var(--text-1)",tx2=dark?"#A6C0D4":"var(--text-2)",tx3=dark?"#7E97AC":"var(--text-3)";
+  const box=dark
+    ?{position:"absolute",right:30,bottom:28,width:230,maxWidth:"42%",background:"rgba(7,26,43,.84)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",border:"1px solid rgba(125,160,185,.28)",borderRadius:12,padding:"12px 14px",zIndex:24,boxShadow:"0 10px 30px rgba(0,0,0,.35)"}
+    :{...card};
+  const chip=on=>({display:"inline-flex",alignItems:"center",gap:6,padding:"4px 9px",borderRadius:999,fontSize:11.5,fontWeight:on?700:500,cursor:"pointer",color:tx,
+    border:on?(dark?"1.5px solid #6FB3E6":"1.5px solid var(--blue-500)"):(dark?"1px solid rgba(150,175,195,.3)":"1px solid var(--border)"),
+    background:on?(dark?"rgba(79,180,232,.18)":"var(--blue-50)"):(dark?"rgba(255,255,255,.05)":"#fff")});
+  const lab=k=>k==="un80"?"UN80":k==="ms"?"Member State":k==="cso"?"Civil society":"Think tank";
+  return <div style={box}>
+    <div style={{...lbl,color:tx2,marginBottom:8}}>How to read it</div>
+    <div style={{fontSize:11.5,fontWeight:700,color:tx,marginBottom:6}}>Distance from centre · degree of change</div>
+    <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:7}}>{LEVELS.map((l,i)=><div key={l.v} style={{display:"flex",gap:8,alignItems:"center",fontSize:12,color:tx}}><span className="mono" style={{width:15,height:15,borderRadius:"50%",display:"grid",placeItems:"center",fontSize:9.5,fontWeight:700,color:"#fff",background:["#7FB8E8","#5FD0C4","#F5C06A","#F47E7E"][i],flexShrink:0}}>{l.v}</span>{l.label}</div>)}</div>
+    <div style={{fontSize:10.5,color:tx3,marginBottom:10,lineHeight:1.4}}>Centre = status quo · rim = take it apart.</div>
+    <div style={{fontSize:11.5,fontWeight:700,color:tx,marginBottom:6}}>Ring · source <span style={{fontWeight:400,color:tx3}}>· click to spotlight</span></div>
+    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+      <button onClick={onAll} style={chip(allOn)}>All</button>
+      {Object.entries(SOURCES).map(([k])=><button key={k} onClick={()=>onSolo(k)} style={chip(srcFilter.has(k)&&!allOn)}><Sw src={k}/>{lab(k)}</button>)}
+    </div>
+  </div>;
+}
 function Chip({active,color,onClick,children}){return <button onClick={onClick} style={{display:"inline-flex",alignItems:"center",gap:7,padding:"6px 11px",borderRadius:999,border:active?`1.5px solid ${color}`:"1px solid var(--border)",background:active?"var(--blue-50)":"#fff",color:"var(--text-1)",fontSize:13,fontWeight:active?700:500}}><span style={{width:9,height:9,borderRadius:2,background:color,flexShrink:0}}/>{children}</button>;}
 
 function Detail({blip,allItems,onClose,onEdit,onJumpToWp,onJumpToExt,onBack,canBack,cluster,onCycle,onShowSources}){
@@ -496,7 +585,7 @@ function Detail({blip,allItems,onClose,onEdit,onJumpToWp,onJumpToExt,onBack,canB
     </div>
     <div style={{padding:"12px 18px",borderTop:"1px solid var(--border-subtle)",display:"flex",gap:8,flexDirection:"column"}}>
       {isUN&&<a href="https://un80actions.un.org/" target="_blank" rel="noopener noreferrer" style={{display:"block",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",textDecoration:"none"}}>View on un80actions.un.org →</a>}
-      {!isUN&&<button onClick={()=>onShowSources&&onShowSources(blip.by)} style={{display:"block",width:"100%",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",cursor:"pointer"}}>View all external sources →</button>}
+      {!isUN&&<button onClick={()=>onShowSources&&onShowSources(blip.by)} style={{display:"block",width:"100%",textAlign:"center",padding:"9px",borderRadius:8,border:"1px solid var(--blue-300)",background:"var(--blue-50)",fontWeight:600,fontSize:13,color:"var(--blue-700)",cursor:"pointer"}}>View all sources →</button>}
       <button onClick={()=>onEdit(blip)} style={{width:"100%",padding:"9px",borderRadius:8,border:"1px solid var(--border)",background:"#fff",fontWeight:600,fontSize:13,color:"var(--blue-600)",cursor:"pointer"}}>Edit this item</button>
     </div>
   </div>);
@@ -592,7 +681,9 @@ function App(){
   const [toast,setToast]=useState("");
   const fileRef=useRef(null);
   const reduced=useMemo(()=>window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,[]);
-  const isMobile=useMemo(()=>window.innerWidth<900,[]);
+  const [vw,setVw]=useState(typeof window!=="undefined"?window.innerWidth:1200);
+  useEffect(()=>{const h=()=>setVw(window.innerWidth);window.addEventListener("resize",h);return ()=>window.removeEventListener("resize",h);},[]);
+  const isMobile=vw<1160;
   const flash=m=>{setToast(m);setTimeout(()=>setToast(""),2200);};
 
   const layout=useMemo(()=>{
@@ -652,7 +743,7 @@ function App(){
     :{width:340,flexShrink:0,height:"100%",overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12,borderRight:"1px solid var(--border)",background:"var(--surface-page)"};
   const mainStyle=isMobile
     ?{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",padding:10,background:"radial-gradient(circle at 50% 46%, #0a2236 0%, #05101b 100%)",minHeight:420}
-    :{flex:1,minWidth:0,position:"relative",display:"flex",alignItems:"center",justifyContent:"center",padding:6,background:"radial-gradient(circle at 50% 46%, #0a2236 0%, #05101b 100%)",overflow:"hidden"};
+    :{flex:1,minWidth:0,position:"relative",display:"flex",alignItems:"center",justifyContent:"flex-start",padding:6,background:"radial-gradient(circle at 36% 47%, #0a2236 0%, #05101b 100%)",overflow:"hidden"};
   const radarBox=isMobile?{width:"100%",maxWidth:620,aspectRatio:"557 / 497"}:{height:"100%",aspectRatio:"557 / 497",maxWidth:"100%"};
 
   return (<div style={pageWrap}><div style={appShell}>
@@ -699,21 +790,12 @@ function App(){
           <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>Click a colour to spotlight only that stance; click it again or “All” to reset.</p>
         </div>
 
-        <div style={denseCard}><div style={{...lbl,marginBottom:9}}>How to read it</div>
-          <div style={sub}>Distance from centre · degree of change</div>
-          <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:11}}>{LEVELS.map((l,i)=><div key={l.v} style={{display:"flex",gap:9,alignItems:"center",fontSize:12.5,color:"var(--text-1)"}}><span className="mono" style={{width:16,height:16,borderRadius:"50%",display:"grid",placeItems:"center",fontSize:10,fontWeight:700,color:"#fff",background:["#7FB8E8","#5FD0C4","#F5C06A","#F47E7E"][i],flexShrink:0}}>{l.v}</span>{l.label}</div>)}</div>
-          <p style={{fontSize:11,color:"var(--text-3)",marginTop:-4,marginBottom:11,lineHeight:1.4}}>Centre = keep the status quo; the rim = take it apart.</p>
-          <div style={sub}>Source · the ring</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            <button onClick={()=>setSrcFilter(new Set(allSrc))} style={pill(allOn(srcFilter,allSrc))}>All</button>
-            {Object.entries(SOURCES).map(([k,s])=>{const on=srcFilter.has(k)&&!allOn(srcFilter,allSrc);return <button key={k} onClick={()=>solo(srcFilter,setSrcFilter,allSrc,k)} aria-pressed={srcFilter.has(k)} style={{display:"inline-flex",alignItems:"center",gap:8,padding:"5px 10px",borderRadius:999,fontSize:12.5,fontWeight:on?700:500,border:on?"1.5px solid var(--blue-500)":"1px solid var(--border)",background:on?"var(--blue-50)":"#fff",color:"var(--text-1)",cursor:"pointer"}}><Sw src={k}/>{k==="un80"?"UN80":k==="ms"?"Member State":k==="cso"?"Civil society":"Think tank"}</button>;})}
-          </div>
-          <p style={{fontSize:11,color:"var(--text-3)",marginTop:8,lineHeight:1.4}}>The ring shows who proposed it (UN80 actions have none). Click to spotlight one source.</p>
-        </div>
+        {isMobile&&<ReadKey srcFilter={srcFilter} onSolo={k=>solo(srcFilter,setSrcFilter,allSrc,k)} onAll={()=>setSrcFilter(new Set(allSrc))} allOn={allOn(srcFilter,allSrc)}/>}
       </aside>
 
       <main style={mainStyle}>
         <div style={radarBox}><Sonar layout={layout} view={view} activeSector={activeSector} onPick={pick} selected={selected} reduced={reduced} sweepOn={sweepOn}/></div>
+        {!isMobile&&!selected&&!editing&&<ReadKey dark srcFilter={srcFilter} onSolo={k=>solo(srcFilter,setSrcFilter,allSrc,k)} onAll={()=>setSrcFilter(new Set(allSrc))} allOn={allOn(srcFilter,allSrc)}/>}
         {selected&&!editing&&<Detail blip={selected} allItems={items} onClose={closeDetail} onEdit={startEdit} onJumpToWp={jumpToWp} onJumpToExt={jumpToExt} onBack={goBack} canBack={navStack.length>0} cluster={cluster?{pos:cluster.idx+1,len:cluster.ids.length}:null} onCycle={cycleCluster} onShowSources={(name)=>{setSrcHighlight(name||null);setShowSources(true);}}/>}
         {editing&&<EditForm draft={editing} setDraft={setEditing} onSave={saveEdit} onCancel={()=>setEditing(null)} onDelete={deleteItem} isNew={editIsNew}/>}
         {showSources&&<SourcesPanel docs={sourceDocs} highlight={srcHighlight} onClose={()=>{setShowSources(false);setSrcHighlight(null);}}/>}
